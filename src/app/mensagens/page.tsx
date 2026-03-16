@@ -12,6 +12,7 @@ interface Chat {
   otherUserId: string;
   lastMessage: string;
   updatedAt: string;
+  unreadCount: number;
 }
 
 interface User {
@@ -44,12 +45,18 @@ export default function MessagesManagement() {
     if (Array.isArray(messages)) {
       messages.forEach((msg: any) => {
         const otherId = msg.senderId === session?.user?.id ? msg.receiverId : msg.senderId;
+        const isUnread = !msg.isRead && msg.receiverId === session?.user?.id;
+        
         if (!conversations.has(otherId)) {
           conversations.set(otherId, {
             otherUserId: otherId,
             lastMessage: msg.text,
             updatedAt: msg.createdAt,
+            unreadCount: isUnread ? 1 : 0,
           });
+        } else if (isUnread) {
+          const current = conversations.get(otherId);
+          current.unreadCount += 1;
         }
       });
     }
@@ -115,7 +122,14 @@ export default function MessagesManagement() {
                 </div>
                 <div className="flex-1 min-w-0">
                   <div className="font-semibold text-foreground flex items-center justify-between">
-                    <span>{availableUsers.find(u => u._id === chat.otherUserId)?.name || `Usuário ${chat.otherUserId.slice(-4)}`}</span>
+                    <div className="flex items-center gap-2">
+                       <span>{availableUsers.find(u => u._id === chat.otherUserId)?.name || `Usuário ${chat.otherUserId.slice(-4)}`}</span>
+                       {chat.unreadCount > 0 && (
+                         <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                           {chat.unreadCount}
+                         </span>
+                       )}
+                    </div>
                     <span className="text-xs font-normal text-muted-foreground">
                       {new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                     </span>

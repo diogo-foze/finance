@@ -293,11 +293,16 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
                     <div
                       onClick={() => !msg.isDeleted && handleMessageClick(msg)}
                       onContextMenu={(e) => !msg.isDeleted && handleLongPress(e, msg)}
-                      className={`p-4 rounded-2xl shadow-sm cursor-pointer select-none transition-all ${isMe
+                      className={`relative p-4 rounded-2xl shadow-sm cursor-pointer select-none transition-all ${isMe
                         ? 'bg-primary text-primary-foreground rounded-br-none hover:brightness-110'
                         : 'bg-background text-foreground border border-border rounded-bl-none'
                         } ${msg.isDeleted ? 'opacity-50 grayscale-[0.5]' : ''}`}
                     >
+                      {!isMe && !msg.isRead && !msg.isDeleted && (
+                        <span className="absolute -top-2.5 -left-1 bg-red-500 text-white text-[9px] font-bold px-1.5 py-0.5 rounded-full shadow-sm animate-bounce">
+                          NOVA
+                        </span>
+                      )}
                       {msg.isDeleted ? (
                         <p className="text-sm italic opacity-70">Mensagem apagada</p>
                       ) : (
