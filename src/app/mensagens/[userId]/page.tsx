@@ -10,7 +10,7 @@ import { AppLayout } from "@/components/layout/AppLayout";
 export default function ChatPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = use(params);
   const { data: session } = useSession();
-  const { socket, setHasNewMessage, checkUnread } = useSocket();
+  const { socket, unreadCount, setUnreadCount, checkUnread } = useSocket();
   const [messages, setMessages] = useState<any[]>([]);
   const [inputText, setInputText] = useState("");
   const [editingMessage, setEditingMessage] = useState<any>(null);
@@ -68,11 +68,11 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
       if (unreadIds.length > 0) {
         markAsRead(unreadIds);
       }
-      setHasNewMessage(false);
+      setUnreadCount(0);
     }
 
     if (session) fetchData();
-  }, [session, userId, markAsRead, setHasNewMessage]);
+  }, [session, userId, markAsRead, setUnreadCount]);
 
   useEffect(() => {
     if (socket) {
@@ -81,7 +81,7 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
           setMessages((prev) => [...prev, msg]);
           if (String(msg.senderId) === String(userId)) {
             markAsRead([msg._id]);
-            setHasNewMessage(false);
+            setUnreadCount(0);
           }
         }
       });
@@ -122,7 +122,7 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
         socket.off("message_deleted");
       };
     }
-  }, [socket, userId, markAsRead, setHasNewMessage]);
+  }, [socket, userId, markAsRead, setUnreadCount]);
 
   useEffect(() => {
     scrollRef.current?.scrollIntoView({ behavior: "smooth" });

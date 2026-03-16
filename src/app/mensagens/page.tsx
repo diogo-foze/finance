@@ -23,7 +23,7 @@ interface User {
 
 export default function MessagesManagement() {
   const { data: session } = useSession();
-  const { socket, setHasNewMessage } = useSocket();
+  const { socket, setUnreadCount } = useSocket();
   const [chats, setChats] = useState<Chat[]>([]);
   const [availableUsers, setAvailableUsers] = useState<User[]>([]);
   const [isModalOpen, setIsModalOpen] = useState(false);
@@ -67,22 +67,22 @@ export default function MessagesManagement() {
   useEffect(() => {
     if (session) {
        fetchData();
-       setHasNewMessage(false); // Clear notification indicator when entering messages list
+       setUnreadCount(0); // Clear local count when viewing list (or keep it if you want it to persist until read)
     }
-  }, [session, fetchData, setHasNewMessage]);
+  }, [session, fetchData]);
 
   useEffect(() => {
     if (socket) {
       socket.on("new_message", () => {
         fetchData();
-        setHasNewMessage(false);
+        setUnreadCount(0);
       });
 
       return () => {
         socket.off("new_message");
       };
     }
-  }, [socket, fetchData, setHasNewMessage]);
+  }, [socket, fetchData, setUnreadCount]);
 
   const filteredUsers = availableUsers.filter(u => 
     u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
