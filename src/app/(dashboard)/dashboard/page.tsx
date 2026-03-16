@@ -1,0 +1,279 @@
+"use client";
+
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { DollarSign, ArrowUpCircle, ArrowDownCircle, Users, Receipt, Landmark, TrendingUp } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Skeleton } from "@/components/ui/skeleton";
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
+import { format } from "date-fns";
+import { ptBR } from "date-fns/locale/pt-BR";
+import { useSession } from "next-auth/react";
+import { Badge } from "@/components/ui/badge";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
+import Link from "next/link";
+
+interface DashboardData {
+  summary: {
+    saldo: number;
+    receitas: number;
+    despesas: number;
+  };
+  chartData: any[];
+  recentTransactions: any[];
+  userStats: {
+    totalUsers: number;
+    onlineUsers: number;
+  } | null;
+}
+
+function DashboardSkeleton() {
+  return (
+    <div className="space-y-4">
+      <div className="grid gap-4 md:grid-cols-3">
+        {[1, 2, 3].map((i) => (
+          <Card key={i}>
+            <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+              <Skeleton className="h-4 w-1/2" />
+              <Skeleton className="h-4 w-4 rounded-full" />
+            </CardHeader>
+            <CardContent>
+              <Skeleton className="h-8 w-3/4 mb-1" />
+              <Skeleton className="h-3 w-1/4" />
+            </CardContent>
+          </Card>
+        ))}
+      </div>
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Skeleton className="col-span-4 h-[400px]" />
+        <Skeleton className="col-span-3 h-[400px]" />
+      </div>
+    </div>
+  );
+}
+
+export default function DashboardPage() {
+  const { data: session } = useSession();
+  const [data, setData] = useState<DashboardData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    async function fetchData() {
+      try {
+        const response = await fetch("/api/dashboard/stats");
+        if (response.ok) {
+          const stats = await response.json();
+          setData(stats);
+        }
+      } catch (error) {
+        console.error("Erro ao buscar dados do dashboard:", error);
+      } finally {
+        setLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
+
+  if (loading) return <DashboardSkeleton />;
+  if (!data) return <p>Houve um erro ao carregar os dados.</p>;
+
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
+  };
+
+  const isAdmin = session?.user?.role === "admin";
+
+  return (
+    <div className="flex-1 space-y-4">
+      <div className="flex items-center justify-between space-y-2 mb-6">
+        <h2 className="text-3xl font-bold tracking-tight">Dashboard</h2>
+      </div>
+      
+      <div className="grid gap-4 md:grid-cols-3 mb-8">
+        <Card className="group hover:shadow-lg transition-all duration-300 bg-white border-zinc-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-zinc-500 group-hover:text-primary transition-colors">Saldo Atual</CardTitle>
+            <DollarSign className="h-4 w-4 text-primary group-hover:scale-110 transition-transform" />
+          </CardHeader>
+          <CardContent>
+            <div className={`text-2xl font-bold transition-colors ${data.summary.saldo >= 0 ? "text-zinc-900 group-hover:text-primary" : "text-destructive"}`}>
+              {formatCurrency(data.summary.saldo)}
+            </div>
+            <p className="text-xs text-zinc-400 flex items-center gap-1 mt-1 group-hover:text-zinc-600 transition-colors">
+              <TrendingUp className="h-3 w-3" /> Balanço acumulado
+            </p>
+          </CardContent>
+        </Card>
+        
+        <Card className="group hover:shadow-lg transition-all duration-300 bg-white border-zinc-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-zinc-500 group-hover:text-emerald-600 transition-colors">Receitas do Mês</CardTitle>
+            <ArrowUpCircle className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-zinc-900 group-hover:text-emerald-600 transition-colors">{formatCurrency(data.summary.receitas)}</div>
+            <p className="text-xs text-zinc-400 mt-1 group-hover:text-zinc-600 transition-colors">Total recebido em {format(new Date(), "MMMM", { locale: ptBR })}</p>
+          </CardContent>
+        </Card>
+
+        <Card className="group hover:shadow-lg transition-all duration-300 bg-white border-zinc-200">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-zinc-500 group-hover:text-destructive transition-colors">Despesas do Mês</CardTitle>
+            <ArrowDownCircle className="h-4 w-4 text-destructive group-hover:scale-110 transition-transform" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-destructive group-hover:brightness-110 transition-all">{formatCurrency(data.summary.despesas)}</div>
+            <p className="text-xs text-zinc-400 mt-1 group-hover:text-zinc-600 transition-colors">Total planejado para este mês</p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-7">
+        <Card className="group col-span-4 shadow-sm border-zinc-200 bg-white hover:shadow-md transition-all duration-300">
+          <CardHeader>
+            <CardTitle className="group-hover:text-primary transition-colors">Visão Geral (6 Meses)</CardTitle>
+            <CardDescription className="group-hover:text-zinc-600 transition-colors">Comparativo de Receitas vs Despesas</CardDescription>
+          </CardHeader>
+          <CardContent className="h-[350px]">
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart 
+                data={data.chartData} 
+                margin={{ top: 30, right: 30, left: 20, bottom: 5 }}
+                barGap={8}
+              >
+                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f0f0f0" />
+                <XAxis 
+                  dataKey="name" 
+                  stroke="#a1a1aa" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tick={{ fill: '#71717a' }}
+                />
+                <YAxis 
+                  stroke="#a1a1aa" 
+                  fontSize={12} 
+                  tickLine={false} 
+                  axisLine={false} 
+                  tickFormatter={(value) => `R$${value}`}
+                  tick={{ fill: '#71717a' }}
+                />
+                <Tooltip 
+                  cursor={false}
+                  contentStyle={{ 
+                    backgroundColor: "rgba(255, 255, 255, 0.95)", 
+                    backdropFilter: "blur(12px)",
+                    border: "1px solid #e4e4e7", 
+                    borderRadius: "12px", 
+                    boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1), 0 10px 10px -5px rgba(0, 0, 0, 0.04)",
+                    color: "#18181b" 
+                  }}
+                  itemStyle={{ fontSize: "12px", fontWeight: "600" }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
+                <Bar 
+                  dataKey="receita" 
+                  fill="#0070f3" 
+                  radius={[6, 6, 0, 0]} 
+                  name="Receita" 
+                  barSize={28}
+                  activeBar={{ 
+                    fill: '#0070f3',
+                    stroke: '#005cc5', 
+                    strokeWidth: 2,
+                    filter: 'drop-shadow(0px 0px 8px rgba(0, 112, 243, 0.4))'
+                  }}
+                />
+                <Bar 
+                  dataKey="despesa" 
+                  fill="#ef4444" 
+                  radius={[6, 6, 0, 0]} 
+                  name="Despesa" 
+                  barSize={28}
+                  activeBar={{ 
+                    fill: '#ef4444',
+                    stroke: '#dc2626', 
+                    strokeWidth: 2,
+                    filter: 'drop-shadow(0px 0px 8px rgba(239, 68, 68, 0.4))'
+                  }}
+                />
+              </BarChart>
+            </ResponsiveContainer>
+          </CardContent>
+        </Card>
+
+        <div className="col-span-3 space-y-4">
+          <Card className="group shadow-sm border-zinc-200 bg-white hover:shadow-md transition-all duration-300">
+            <CardHeader className="flex flex-row items-center justify-between">
+              <div>
+                <CardTitle className="group-hover:text-primary transition-colors">Movimentações Recentes</CardTitle>
+                <CardDescription className="group-hover:text-zinc-600 transition-colors">Últimos 5 registros</CardDescription>
+              </div>
+              <Receipt className="h-4 w-4 text-zinc-400 group-hover:text-primary transition-colors" />
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                {data.recentTransactions.length > 0 ? (
+                  data.recentTransactions.map((t, i) => (
+                    <div key={i} className="flex items-center justify-between group/item">
+                      <div className="flex items-center gap-3">
+                        <div className={`p-2 rounded-full transition-colors ${t.type === "Receita" ? "bg-emerald-50 group-hover/item:bg-emerald-100" : "bg-red-50 group-hover/item:bg-red-100"}`}>
+                          {t.type === "Receita" ? <Landmark className="h-4 w-4 text-emerald-500" /> : <Receipt className="h-4 w-4 text-destructive" />}
+                        </div>
+                        <div>
+                          <p className="text-sm font-medium leading-none text-zinc-900 group-hover/item:text-primary transition-colors">{t.descricao}</p>
+                          <p className="text-xs text-zinc-500 mt-1">{format(new Date(t.data), "dd 'de' MMM", { locale: ptBR })}</p>
+                        </div>
+                      </div>
+                      <div className={`text-sm font-bold transition-colors ${t.type === "Receita" ? "text-emerald-500 group-hover/item:text-emerald-600" : "text-destructive group-hover/item:text-red-600"}`}>
+                        {t.type === "Receita" ? "+" : "-"} {formatCurrency(t.valor)}
+                      </div>
+                    </div>
+                  ))
+                ) : (
+                  <p className="text-sm text-center text-zinc-400 py-8">Nenhuma transação recente encontrada.</p>
+                )}
+              </div>
+            </CardContent>
+          </Card>
+
+          {isAdmin && data.userStats && (
+            <Card className="group shadow-sm border-2 border-primary/10 bg-white hover:border-primary/30 transition-all duration-300 hover:shadow-md">
+              <CardHeader className="flex flex-row items-center justify-between pb-2">
+                <div>
+                  <CardTitle className="text-lg text-zinc-900 group-hover:text-primary transition-colors">Gestão de Usuários</CardTitle>
+                  <CardDescription className="group-hover:text-zinc-600 transition-colors">Estatísticas do sistema</CardDescription>
+                </div>
+                <Users className="h-5 w-5 text-primary group-hover:scale-110 transition-transform" />
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-2 gap-4 py-2">
+                  <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-zinc-50 group-hover:bg-primary/5 transition-colors">
+                    <span className="text-2xl font-bold text-zinc-900">{data.userStats.totalUsers}</span>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-zinc-500">Cadastrados</span>
+                  </div>
+                  <div className="flex flex-col items-center justify-center p-3 rounded-xl bg-emerald-50 group-hover:bg-emerald-100 transition-colors relative overflow-hidden">
+                    <div className="flex items-center gap-1.5">
+                      <span className="text-2xl font-bold text-emerald-600">{data.userStats.onlineUsers}</span>
+                      <span className="relative flex h-2 w-2">
+                        <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-emerald-400 opacity-75"></span>
+                        <span className="relative inline-flex rounded-full h-2 w-2 bg-emerald-500"></span>
+                      </span>
+                    </div>
+                    <span className="text-[10px] uppercase tracking-wider font-semibold text-emerald-600">Online Agora</span>
+                  </div>
+                </div>
+                <Link 
+                  href="/admin/users" 
+                  className={cn(buttonVariants({ variant: "link" }), "w-full text-xs h-auto p-0 mt-4 text-primary hover:text-primary/80")}
+                >
+                  Ir para gestão completa →
+                </Link>
+              </CardContent>
+            </Card>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+}
