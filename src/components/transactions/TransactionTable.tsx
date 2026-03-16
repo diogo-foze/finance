@@ -20,9 +20,10 @@ export interface Transaction {
 interface TransactionTableProps {
   transactions: Transaction[];
   type: "Receita" | "Despesa";
+  onRowClick?: (transaction: Transaction) => void;
 }
 
-export function TransactionTable({ transactions, type }: TransactionTableProps) {
+export function TransactionTable({ transactions, type, onRowClick }: TransactionTableProps) {
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
@@ -55,7 +56,11 @@ export function TransactionTable({ transactions, type }: TransactionTableProps) 
             </TableRow>
           ) : (
             transactions.map((transaction) => (
-              <TableRow key={transaction._id}>
+              <TableRow 
+                key={transaction._id}
+                className={onRowClick ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""}
+                onClick={() => onRowClick && onRowClick(transaction)}
+              >
                 <TableCell className="font-medium">{transaction.descricao}</TableCell>
                 <TableCell>{transaction.categoria}</TableCell>
                 <TableCell>

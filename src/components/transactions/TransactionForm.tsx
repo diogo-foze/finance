@@ -1,52 +1,55 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog"
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { toast } from "sonner";
-import { PlusCircle } from "lucide-react";
+import { PlusCircle, Trash2 } from "lucide-react";
 
 interface TransactionFormProps {
   type: "Receita" | "Despesa";
   onSuccess?: () => void;
+  transaction?: Transaction | null;
+  isOpen?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
-export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
+import { Transaction } from "./TransactionTable";
+
+export function TransactionForm({ type, onSuccess, transaction, isOpen: externalOpen, onOpenChange: setExternalOpen }: TransactionFormProps) {
   const router = useRouter();
-  const [open, setOpen] = useState(false);
+  const [internalOpen, setInternalOpen] = useState(false);
   const [loading, setLoading] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
+
+  const open = externalOpen !== undefined ? externalOpen : internalOpen;
+  const setOpen = setExternalOpen !== undefined ? setExternalOpen : setInternalOpen;
+
   const [formData, setFormData] = useState({
     descricao: "",
     valor: "",
     data: new Date().toISOString().split('T')[0],
     categoria: "",
-    tipoMovimentacao: "Fixo"
+    tipoMovimentacao: "Fixo" as "Fixo" | "Variável"
   });
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-    setLoading(true);
+  const formatInitialValue = (val: number) => {
+    return val.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
+  };
 
-    try {
-      const endpoint = type === "Receita" ? "/api/receitas" : "/api/despesas";
-      
-      const response = await fetch(endpoint, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(formData),
+  const syncFormWithTransaction = (t: Transaction | null | undefined) => {
+     if (t) {
+      setFormData({
+        descricao: t.descricao,
+        valor: formatInitialValue(t.valor),
+        data: new Date(t.data).toISOString().split('T')[0],
+        categoria: t.categoria,
+        tipoMovimentacao: t.tipoMovimentacao
       });
-
-      if (!response.ok) {
-        throw new Error("Erro ao salvar dados");
-      }
-
-      toast.success(`${type} adicionada com sucesso!`);
-      setOpen(false);
+    } else {
       setFormData({
         descricao: "",
         valor: "",
@@ -54,8 +57,37 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
         categoria: "",
         tipoMovimentacao: "Fixo"
       });
+    }
+  };
+
+  // Sync when transaction prop changes
+  useEffect(() => {
+    syncFormWithTransaction(transaction);
+  }, [transaction]);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+
+    try {
+      const endpoint = type === "Receita" ? "/api/receitas" : "/api/despesas";
+      const isEdit = !!transaction?._id;
       
-      // Refresh the page or trigger a data reload
+      const response = await fetch(endpoint, {
+        method: isEdit ? "PUT" : "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(isEdit ? { ...formData, id: transaction._id } : formData),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao salvar dados");
+      }
+
+      toast.success(`${type} ${isEdit ? 'atualizada' : 'adicionada'} com sucesso!`);
+      setOpen(false);
+      
       if (onSuccess) {
         onSuccess();
       } else {
@@ -65,6 +97,28 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
       toast.error("Ocorreu um erro ao salvar os dados.");
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!transaction?._id) return;
+    if (!confirm(`Tem certeza que deseja excluir esta ${type.toLowerCase()}?`)) return;
+
+    setDeleteLoading(true);
+    try {
+      const endpoint = type === "Receita" ? `/api/receitas?id=${transaction._id}` : `/api/despesas?id=${transaction._id}`;
+      const response = await fetch(endpoint, { method: "DELETE" });
+
+      if (!response.ok) throw new Error("Erro ao excluir");
+
+      toast.success(`${type} excluída com sucesso!`);
+      setOpen(false);
+      if (onSuccess) onSuccess();
+      else router.refresh();
+    } catch (error) {
+      toast.error("Erro ao excluir!");
+    } finally {
+      setDeleteLoading(false);
     }
   };
 
@@ -82,14 +136,30 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger render={<Button />}>
-        <PlusCircle className="mr-2 h-4 w-4" />
-        Nova {type}
-      </DialogTrigger>
+      {externalOpen === undefined && (
+        <DialogTrigger render={<Button />}>
+          <PlusCircle className="mr-2 h-4 w-4" />
+          Nova {type}
+        </DialogTrigger>
+      )}
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>Adicionar Nova {type}</DialogTitle>
+          <DialogTitle>{transaction ? 'Editar' : 'Adicionar Nova'} {type}</DialogTitle>
         </DialogHeader>
+
+        {transaction && (
+          <Button
+            type="button"
+            variant="ghost"
+            size="sm"
+            onClick={handleDelete}
+            disabled={deleteLoading}
+            className="absolute top-2 right-10 h-8 text-destructive hover:text-destructive hover:bg-destructive/10"
+          >
+            {deleteLoading ? "..." : <Trash2 className="w-4 h-4" />}
+            <span className="sr-only">Excluir</span>
+          </Button>
+        )}
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Descrição</label>
@@ -146,7 +216,7 @@ export function TransactionForm({ type, onSuccess }: TransactionFormProps) {
           </div>
           <div className="pt-2 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
-            <Button type="submit" disabled={loading}>{loading ? "Salvando..." : "Salvar"}</Button>
+            <Button type="submit" disabled={loading}>{loading ? "Salvando..." : (transaction ? "Atualizar" : "Salvar")}</Button>
           </div>
         </form>
       </DialogContent>

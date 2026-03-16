@@ -1,32 +1,40 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { TransactionTable, Transaction } from "@/components/transactions/TransactionTable";
 import { TransactionForm } from "@/components/transactions/TransactionForm";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import connectToDatabase from "@/lib/mongodb";
-import Receita from "@/models/Receita";
 
-async function getReceitas(): Promise<Transaction[]> {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || !session.user) {
-    return [];
-  }
+export default function ReceitasPage() {
+  const [receitas, setReceitas] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  await connectToDatabase();
-  const data = await Receita.find({ userId: session.user.id }).sort({ dataRecebimento: -1 });
-  
-  return data.map(item => ({
-    _id: item._id.toString(),
-    descricao: item.descricao,
-    valor: item.valor,
-    data: item.dataRecebimento.toISOString(),
-    categoria: item.categoria,
-    tipoMovimentacao: item.tipoMovimentacao
-  }));
-}
+  const fetchReceitas = async () => {
+    try {
+      const res = await fetch("/api/receitas");
+      const data = await res.json();
+      if (res.ok) {
+        // Transform data from API format to Transaction format
+        const transformed = data.map((item: any) => ({
+          _id: item._id,
+          descricao: item.descricao,
+          valor: item.valor,
+          data: item.dataRecebimento,
+          categoria: item.categoria,
+          tipoMovimentacao: item.tipoMovimentacao
+        }));
+        setReceitas(transformed);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar receitas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-export default async function ReceitasPage() {
-  const receitas = await getReceitas();
+  useEffect(() => {
+    fetchReceitas();
+  }, []);
 
   return (
     <div className="flex-1 space-y-4">
@@ -36,11 +44,27 @@ export default async function ReceitasPage() {
            <p className="text-muted-foreground">Gerencie suas entradas financeiras.</p>
         </div>
         <div className="flex items-center space-x-2">
-          <TransactionForm type="Receita" />
+          <TransactionForm type="Receita" onSuccess={fetchReceitas} />
         </div>
       </div>
+
+      <TransactionForm 
+        type="Receita"
+        transaction={editingTransaction}
+        isOpen={!!editingTransaction}
+        onOpenChange={(open) => !open && setEditingTransaction(null)}
+        onSuccess={fetchReceitas}
+      />
       
-      <TransactionTable transactions={receitas} type="Receita" />
+      {loading ? (
+        <p>Carregando...</p>
+      ) : (
+        <TransactionTable 
+          transactions={receitas} 
+          type="Receita" 
+          onRowClick={(t) => setEditingTransaction(t)}
+        />
+      )}
     </div>
   );
 }

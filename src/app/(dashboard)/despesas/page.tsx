@@ -1,32 +1,40 @@
+"use client";
+
+import { useState, useEffect } from "react";
 import { TransactionTable, Transaction } from "@/components/transactions/TransactionTable";
 import { TransactionForm } from "@/components/transactions/TransactionForm";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
-import connectToDatabase from "@/lib/mongodb";
-import Despesa from "@/models/Despesa";
 
-async function getDespesas(): Promise<Transaction[]> {
-  const session = await getServerSession(authOptions);
-  
-  if (!session || !session.user) {
-    return [];
-  }
+export default function DespesasPage() {
+  const [despesas, setDespesas] = useState<Transaction[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
 
-  await connectToDatabase();
-  const data = await Despesa.find({ userId: session.user.id }).sort({ dataVencimento: -1 });
-  
-  return data.map(item => ({
-    _id: item._id.toString(),
-    descricao: item.descricao,
-    valor: item.valor,
-    data: item.dataVencimento.toISOString(),
-    categoria: item.categoria,
-    tipoMovimentacao: item.tipoMovimentacao
-  }));
-}
+  const fetchDespesas = async () => {
+    try {
+      const res = await fetch("/api/despesas");
+      const data = await res.json();
+      if (res.ok) {
+        // Transform data from API format to Transaction format
+        const transformed = data.map((item: any) => ({
+          _id: item._id,
+          descricao: item.descricao,
+          valor: item.valor,
+          data: item.dataVencimento,
+          categoria: item.categoria,
+          tipoMovimentacao: item.tipoMovimentacao
+        }));
+        setDespesas(transformed);
+      }
+    } catch (error) {
+      console.error("Erro ao buscar despesas:", error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
-export default async function DespesasPage() {
-  const despesas = await getDespesas();
+  useEffect(() => {
+    fetchDespesas();
+  }, []);
 
   return (
     <div className="flex-1 space-y-4">
@@ -36,11 +44,27 @@ export default async function DespesasPage() {
            <p className="text-muted-foreground">Gerencie suas saídas financeiras.</p>
         </div>
         <div className="flex items-center space-x-2">
-          <TransactionForm type="Despesa" />
+          <TransactionForm type="Despesa" onSuccess={fetchDespesas} />
         </div>
       </div>
+
+      <TransactionForm 
+        type="Despesa"
+        transaction={editingTransaction}
+        isOpen={!!editingTransaction}
+        onOpenChange={(open) => !open && setEditingTransaction(null)}
+        onSuccess={fetchDespesas}
+      />
       
-      <TransactionTable transactions={despesas} type="Despesa" />
+      {loading ? (
+        <p>Carregando...</p>
+      ) : (
+        <TransactionTable 
+          transactions={despesas} 
+          type="Despesa" 
+          onRowClick={(t) => setEditingTransaction(t)}
+        />
+      )}
     </div>
   );
 }
