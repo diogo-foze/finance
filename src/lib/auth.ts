@@ -87,10 +87,19 @@ export const authOptions: NextAuthOptions = {
       }
       return session;
     },
-    async jwt({ token, user }: any) {
+    async jwt({ token, user, account }: any) {
       if (user) {
-        token.id = user.id;
-        token.role = user.role;
+        if (account?.provider === "google") {
+          await connectToDatabase();
+          const dbUser = await User.findOne({ email: user.email });
+          if (dbUser) {
+            token.id = dbUser._id.toString();
+            token.role = dbUser.role || "user";
+          }
+        } else {
+          token.id = user.id;
+          token.role = user.role;
+        }
       }
       return token;
     },

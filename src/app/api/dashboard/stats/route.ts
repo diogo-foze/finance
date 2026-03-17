@@ -19,6 +19,13 @@ export async function GET() {
 
     await connectToDatabase();
     const userId = session.user.id;
+    
+    // Validate if userId is a standard 24-char hex ObjectId
+    if (!mongoose.Types.ObjectId.isValid(userId)) {
+      console.error(`[Dashboard API] Invalid userId format: ${userId}`);
+      return NextResponse.json({ error: "Sessão inválida" }, { status: 400 });
+    }
+
     const mongooseUserId = new mongoose.Types.ObjectId(userId);
 
     // 1. Summary Totals (Same logic as before but optimized)

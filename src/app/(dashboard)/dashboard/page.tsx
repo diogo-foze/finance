@@ -269,6 +269,12 @@ export default function DashboardPage() {
                 >
                   Ir para gestão completa →
                 </Link>
+                <Link 
+                  href="/admin/settings" 
+                  className={cn(buttonVariants({ variant: "link" }), "w-full text-xs h-auto p-0 mt-2 text-zinc-500 hover:text-primary")}
+                >
+                  Configurações do Sistema →
+                </Link>
               </CardContent>
             </Card>
           )}

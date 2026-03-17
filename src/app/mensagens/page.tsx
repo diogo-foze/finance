@@ -31,37 +31,42 @@ export default function MessagesManagement() {
   const [loading, setLoading] = useState(true);
 
   const fetchData = useCallback(async () => {
-    const [msgRes, userRes] = await Promise.all([
-      fetch("/api/messages"),
-      fetch("/api/users")
-    ]);
-    
-    const messages = await msgRes.json();
-    const users = await userRes.json();
-    
-    setAvailableUsers(users);
+    try {
+      const [msgRes, userRes] = await Promise.all([
+        fetch("/api/messages"),
+        fetch("/api/users")
+      ]);
+      
+      const messages = await msgRes.json();
+      const users = await userRes.json();
+      
+      setAvailableUsers(Array.isArray(users) ? users : []);
 
-    const conversations = new Map();
-    if (Array.isArray(messages)) {
-      messages.forEach((msg: any) => {
-        const otherId = msg.senderId === session?.user?.id ? msg.receiverId : msg.senderId;
-        const isUnread = !msg.isRead && msg.receiverId === session?.user?.id;
-        
-        if (!conversations.has(otherId)) {
-          conversations.set(otherId, {
-            otherUserId: otherId,
-            lastMessage: msg.text,
-            updatedAt: msg.createdAt,
-            unreadCount: isUnread ? 1 : 0,
-          });
-        } else if (isUnread) {
-          const current = conversations.get(otherId);
-          current.unreadCount += 1;
-        }
-      });
+      const conversations = new Map();
+      if (Array.isArray(messages)) {
+        messages.forEach((msg: any) => {
+          const otherId = msg.senderId === session?.user?.id ? msg.receiverId : msg.senderId;
+          const isUnread = !msg.isRead && msg.receiverId === session?.user?.id;
+          
+          if (!conversations.has(otherId)) {
+            conversations.set(otherId, {
+              otherUserId: otherId,
+              lastMessage: msg.text,
+              updatedAt: msg.createdAt,
+              unreadCount: isUnread ? 1 : 0,
+            });
+          } else if (isUnread) {
+            const current = conversations.get(otherId);
+            current.unreadCount += 1;
+          }
+        });
+      }
+      setChats(Array.from(conversations.values()));
+    } catch (error) {
+      console.error("Erro ao carregar mensagens:", error);
+    } finally {
+      setLoading(false);
     }
-    setChats(Array.from(conversations.values()));
-    setLoading(false);
   }, [session]);
 
   useEffect(() => {

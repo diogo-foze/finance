@@ -17,8 +17,8 @@ const navItems = [
 
 const adminItems = [
   { name: "Usuários", href: "/admin/users", icon: Users },
+  { name: "Configurações", href: "/admin/settings", icon: ShieldCheck },
 ];
-
 export function Sidebar({ className }: { className?: string }) {
   const pathname = usePathname();
   const { data: session } = useSession();
