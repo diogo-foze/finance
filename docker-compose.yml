@@ -1,0 +1,36 @@
+services:
+  db:
+    image: mongo:latest
+    container_name: finansys-mongodb
+    restart: always
+    ports:
+      - "27017:27017"
+    volumes:
+      - mongo-data:/data/db
+    networks:
+      - finansys-network
+
+  app:
+    build: .
+    container_name: finansys-app
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      - MONGODB_URI=mongodb://db:27017/finansys
+      - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}
+      - NEXTAUTH_URL=${NEXTAUTH_URL}
+      - SENHA_APP_GMAIL=${SENHA_APP_GMAIL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+    depends_on:
+      - db
+    networks:
+      - finansys-network
+
+networks:
+  finansys-network:
+    driver: bridge
+
+volumes:
+  mongo-data:
