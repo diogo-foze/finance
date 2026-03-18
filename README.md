@@ -44,3 +44,13 @@ The easiest way to deploy your Next.js app is to use the [Vercel Platform](https
 
 Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
  
+## rodar o sistema em contêineres:
+
+Dockerfile: Configurado para fazer o build otimizado da aplicação Next.js e rodar seu servidor customizado com suporte a WebSockets.
+docker-compose.yml: Orquestra tanto a aplicação quanto o banco de dados MongoDB, com volume persistente para não perder dados ao reiniciar.
+.env.example: Um modelo para você preencher com suas chaves de produção.
+.dockerignore: Garante que arquivos desnecessários (como node_modules locais) não pesem na imagem Docker.
+Como rodar no servidor:
+
+Copie o arquivo .env.example para .env e preencha as variáveis.
+Execute o comando: docker-compose up -d --build

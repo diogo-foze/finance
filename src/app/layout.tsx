@@ -15,6 +15,7 @@ export const metadata: Metadata = {
 };
 
 import { SocketProvider } from "@/components/providers/SocketProvider";
+import { VisibilityProvider } from "@/components/providers/VisibilityProvider";
 
 export default function RootLayout({
   children,
@@ -28,8 +29,10 @@ export default function RootLayout({
       >
         <AuthProvider>
           <SocketProvider>
-            {children}
-            <Toaster />
+            <VisibilityProvider>
+              {children}
+              <Toaster />
+            </VisibilityProvider>
           </SocketProvider>
         </AuthProvider>
       </body>

@@ -7,6 +7,8 @@ import {
   TableRow,
 } from "@/components/ui/table"
 import { Badge } from "@/components/ui/badge"
+import { useVisibility } from "@/components/providers/VisibilityProvider"
+import { EyeOff } from "lucide-react"
 
 export interface Transaction {
   _id: string;
@@ -24,6 +26,8 @@ interface TransactionTableProps {
 }
 
 export function TransactionTable({ transactions, type, onRowClick }: TransactionTableProps) {
+  const { isVisible } = useVisibility();
+
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
@@ -70,7 +74,7 @@ export function TransactionTable({ transactions, type, onRowClick }: Transaction
                 </TableCell>
                 <TableCell>{formatDate(transaction.data)}</TableCell>
                 <TableCell className={`text-right font-medium ${type === "Receita" ? "text-emerald-500" : "text-destructive"}`}>
-                  {type === "Receita" ? "+" : "-"}{formatCurrency(transaction.valor)}
+                  {isVisible ? `${type === "Receita" ? "+" : "-"} ${formatCurrency(transaction.valor)}` : <EyeOff className="h-4 w-4 inline-block ml-auto text-zinc-400" />}
                 </TableCell>
               </TableRow>
             ))

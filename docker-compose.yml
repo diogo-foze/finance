@@ -7,6 +7,7 @@ services:
       - "27017:27017"
     volumes:
       - mongo-data:/data/db
+      - ./docker-init:/docker-entrypoint-initdb.d
     networks:
       - finansys-network
 
@@ -15,7 +16,7 @@ services:
     container_name: finansys-app
     restart: always
     ports:
-      - "3000:3000"
+      - "3055:3000"
     environment:
       - MONGODB_URI=mongodb://db:27017/finansys
       - NEXTAUTH_SECRET=${NEXTAUTH_SECRET}

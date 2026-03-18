@@ -1,7 +1,7 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, ArrowUpCircle, ArrowDownCircle, Users, Receipt, Landmark, TrendingUp } from "lucide-react";
+import { DollarSign, ArrowUpCircle, ArrowDownCircle, Users, Receipt, Landmark, TrendingUp, EyeOff } from "lucide-react";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -12,6 +12,7 @@ import { Badge } from "@/components/ui/badge";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
 import Link from "next/link";
+import { useVisibility } from "@/components/providers/VisibilityProvider";
 
 interface DashboardData {
   summary: {
@@ -56,6 +57,7 @@ export default function DashboardPage() {
   const { data: session } = useSession();
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
+  const { isVisible } = useVisibility();
 
   useEffect(() => {
     async function fetchData() {
@@ -97,7 +99,7 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className={`text-2xl font-bold transition-colors ${data.summary.saldo >= 0 ? "text-zinc-900 group-hover:text-primary" : "text-destructive"}`}>
-              {formatCurrency(data.summary.saldo)}
+              {isVisible ? formatCurrency(data.summary.saldo) : <EyeOff className="h-6 w-6 inline-block text-zinc-400" />}
             </div>
             <p className="text-xs text-zinc-400 flex items-center gap-1 mt-1 group-hover:text-zinc-600 transition-colors">
               <TrendingUp className="h-3 w-3" /> Balanço acumulado
@@ -111,7 +113,9 @@ export default function DashboardPage() {
             <ArrowUpCircle className="h-4 w-4 text-emerald-500 group-hover:scale-110 transition-transform" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-zinc-900 group-hover:text-emerald-600 transition-colors">{formatCurrency(data.summary.receitas)}</div>
+            <div className="text-2xl font-bold text-zinc-900 group-hover:text-emerald-600 transition-colors">
+              {isVisible ? formatCurrency(data.summary.receitas) : <EyeOff className="h-6 w-6 inline-block text-zinc-400" />}
+            </div>
             <p className="text-xs text-zinc-400 mt-1 group-hover:text-zinc-600 transition-colors">Total recebido em {format(new Date(), "MMMM", { locale: ptBR })}</p>
           </CardContent>
         </Card>
@@ -122,7 +126,9 @@ export default function DashboardPage() {
             <ArrowDownCircle className="h-4 w-4 text-destructive group-hover:scale-110 transition-transform" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold text-destructive group-hover:brightness-110 transition-all">{formatCurrency(data.summary.despesas)}</div>
+            <div className="text-2xl font-bold text-destructive group-hover:brightness-110 transition-all">
+              {isVisible ? formatCurrency(data.summary.despesas) : <EyeOff className="h-6 w-6 inline-block text-zinc-400" />}
+            </div>
             <p className="text-xs text-zinc-400 mt-1 group-hover:text-zinc-600 transition-colors">Total planejado para este mês</p>
           </CardContent>
         </Card>
@@ -155,7 +161,7 @@ export default function DashboardPage() {
                   fontSize={12} 
                   tickLine={false} 
                   axisLine={false} 
-                  tickFormatter={(value) => `R$${value}`}
+                  tickFormatter={(value) => isVisible ? `R$${value}` : "----"}
                   tick={{ fill: '#71717a' }}
                 />
                 <Tooltip 
@@ -169,6 +175,7 @@ export default function DashboardPage() {
                     color: "#18181b" 
                   }}
                   itemStyle={{ fontSize: "12px", fontWeight: "600" }}
+                  formatter={(value: any) => isVisible ? formatCurrency(Number(value)) : "----"}
                 />
                 <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
                 <Bar 
@@ -226,7 +233,7 @@ export default function DashboardPage() {
                         </div>
                       </div>
                       <div className={`text-sm font-bold transition-colors ${t.type === "Receita" ? "text-emerald-500 group-hover/item:text-emerald-600" : "text-destructive group-hover/item:text-red-600"}`}>
-                        {t.type === "Receita" ? "+" : "-"} {formatCurrency(t.valor)}
+                        {isVisible ? `${t.type === "Receita" ? "+" : "-"} ${formatCurrency(t.valor)}` : <EyeOff className="h-4 w-4 inline-block text-zinc-400" />}
                       </div>
                     </div>
                   ))

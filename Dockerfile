@@ -28,6 +28,6 @@ COPY --from=builder /app/server.ts ./server.ts
 COPY --from=builder /app/src ./src
 
 # Expose the port (usually 3000)
-EXPOSE 3000
+EXPOSE 3055
 
 CMD ["tsx", "server.ts"]

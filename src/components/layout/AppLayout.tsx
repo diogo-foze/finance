@@ -5,11 +5,14 @@ import { Sidebar } from "./Sidebar";
 import { Menu } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
+import { Eye, EyeOff } from "lucide-react";
 
 import { NotificationIndicator } from "@/components/NotificationIndicator";
+import { useVisibility } from "@/components/providers/VisibilityProvider";
 
 export function AppLayout({ children }: { children: React.ReactNode }) {
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const { isVisible, toggleVisibility } = useVisibility();
 
   return (
     <div className="min-h-screen bg-background text-foreground">
@@ -42,7 +45,17 @@ export function AppLayout({ children }: { children: React.ReactNode }) {
           </Button>
           
           <div className="flex flex-1 items-center justify-end gap-x-4">
-             <NotificationIndicator />
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={toggleVisibility}
+              className="text-muted-foreground hover:text-foreground hover:bg-zinc-100 dark:hover:bg-zinc-800 rounded-full transition-colors"
+              title={isVisible ? "Ocultar saldos" : "Mostrar saldos"}
+              type="button"
+            >
+              {isVisible ? <Eye className="w-5 h-5 text-zinc-500" /> : <EyeOff className="w-5 h-5 text-zinc-500" />}
+            </Button>
+            <NotificationIndicator />
           </div>
         </header>
 

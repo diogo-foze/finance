@@ -4,12 +4,14 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend, CartesianGrid } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { useVisibility } from "@/components/providers/VisibilityProvider";
 
 const COLORS = ["#0070f3", "#10b981", "#FFBB28", "#FF8042"];
 
 export default function RelatoriosPage() {
   const [loading, setLoading] = useState(true);
   const [data, setData] = useState<{ barData: any[], pieData: any[] }>({ barData: [], pieData: [] });
+  const { isVisible } = useVisibility();
 
   useEffect(() => {
     async function fetchReports() {
@@ -159,7 +161,7 @@ export default function RelatoriosPage() {
                     fontSize={12}
                     tickLine={false}
                     axisLine={false}
-                    tickFormatter={(value) => `R$${value}`}
+                    tickFormatter={(value) => isVisible ? `R$${value}` : "----"}
                     tick={{ fill: '#71717a' }}
                   />
                   <Tooltip 
@@ -173,7 +175,7 @@ export default function RelatoriosPage() {
                       color: "#18181b" 
                     }}
                     itemStyle={{ fontSize: "12px", fontWeight: "600" }}
-                    formatter={(value: any) => formatCurrency(Number(value))} 
+                    formatter={(value: any) => isVisible ? formatCurrency(Number(value)) : "----"} 
                   />
                   <Legend iconType="circle" wrapperStyle={{ paddingTop: '20px' }} />
                   <Bar 
@@ -245,7 +247,7 @@ export default function RelatoriosPage() {
                       boxShadow: "0 20px 25px -5px rgba(0, 0, 0, 0.1)"
                     }}
                     itemStyle={{ fontSize: "12px", fontWeight: "600" }}
-                    formatter={(value: any) => formatCurrency(Number(value))} 
+                    formatter={(value: any) => isVisible ? formatCurrency(Number(value)) : "----"} 
                   />
                   <Legend iconType="circle" />
                 </PieChart>
