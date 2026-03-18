@@ -27,6 +27,14 @@ const UserSchema = new Schema(
       enum: ["user", "admin"],
       default: "user",
     },
+    resetCode: {
+      type: String,
+      select: false,
+    },
+    resetCodeExpiresAt: {
+      type: Date,
+      select: false,
+    },
     lastActive: {
       type: Date,
       default: Date.now,

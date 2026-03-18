@@ -18,29 +18,63 @@ export async function GET() {
     await connectToDatabase();
     const configs = await Config.find({});
     
-    // Seed default if empty
-    if (configs.length === 0) {
-      const googleConfig = await Config.create([
-        {
-          key: "google_login_enabled",
-          value: true,
-          isPublic: true,
-          description: "Habilita o botão de login pelo Google na tela inicial"
-        },
-        {
-          key: "block_google_registration",
-          value: false,
-          isPublic: false,
-          description: "Bloqueia o cadastro de NOVOS usuários através do login do Google."
-        },
-        {
-          key: "google_registration_blocked_message",
-          value: "O cadastro de novos usuários está temporariamente bloqueado pelo administrador.",
-          isPublic: false,
-          description: "Mensagem exibida quando um novo usuário tenta se cadastrar pelo Google e o bloqueio está ativo."
-        }
-      ]);
-      return NextResponse.json(googleConfig);
+    // Mapeamento das configurações padrão do sistema
+    const defaultConfigs = [
+      {
+        key: "google_login_enabled",
+        value: true,
+        isPublic: true,
+        description: "Habilita o botão de login pelo Google na tela inicial"
+      },
+      {
+        key: "block_google_registration",
+        value: false,
+        isPublic: false,
+        description: "Bloqueia o cadastro de NOVOS usuários através do login do Google."
+      },
+      {
+        key: "google_registration_blocked_message",
+        value: "O cadastro de novos usuários está temporariamente bloqueado pelo administrador.",
+        isPublic: false,
+        description: "Mensagem exibida quando um novo usuário tenta se cadastrar pelo Google e o bloqueio está ativo."
+      },
+      {
+        key: "smtp_host",
+        value: "smtp.example.com",
+        isPublic: false,
+        description: "Servidor SMTP para envio de e-mails."
+      },
+      {
+        key: "smtp_port",
+        value: "587",
+        isPublic: false,
+        description: "Porta do servidor SMTP (ex: 587, 465)."
+      },
+      {
+        key: "smtp_user",
+        value: "seu-email@dominio.com",
+        isPublic: false,
+        description: "Usuário de autenticação do SMTP."
+      },
+      {
+        key: "smtp_password",
+        value: "sua-senha",
+        isPublic: false,
+        description: "Senha de autenticação do SMTP."
+      },
+      {
+        key: "smtp_from_email",
+        value: "nao-responda@dominio.com",
+        isPublic: false,
+        description: "Endereço de e-mail do remetente enviado aos clientes."
+      }
+    ];
+
+    const missingConfigs = defaultConfigs.filter(dc => !configs.some(c => c.key === dc.key));
+
+    if (missingConfigs.length > 0) {
+      const created = await Config.insertMany(missingConfigs);
+      configs.push(...created);
     }
 
     return NextResponse.json(configs);

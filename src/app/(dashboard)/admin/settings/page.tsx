@@ -110,7 +110,12 @@ export default function AdminSettingsPage() {
                       <p className="font-semibold text-sm">
                         {config.key === 'google_login_enabled' ? 'Login via Google' :
                          config.key === 'block_google_registration' ? 'Bloquear Novos Cadastros via Google' :
-                         config.key === 'google_registration_blocked_message' ? 'Mensagem de Bloqueio (Google)' : config.key}
+                         config.key === 'google_registration_blocked_message' ? 'Mensagem de Bloqueio (Google)' : 
+                         config.key === 'smtp_host' ? 'Servidor SMTP (Host)' :
+                         config.key === 'smtp_port' ? 'Porta SMTP' :
+                         config.key === 'smtp_user' ? 'Usuário SMTP' :
+                         config.key === 'smtp_password' ? 'Senha SMTP' :
+                         config.key === 'smtp_from_email' ? 'E-mail do Remetente' : config.key}
                       </p>
                       <p className="text-xs text-muted-foreground">{config.description}</p>
                       {config.isPublic && (
@@ -128,6 +133,7 @@ export default function AdminSettingsPage() {
                       <div className="w-full">
                         <Input 
                           defaultValue={config.value}
+                          type={config.key === 'smtp_password' ? 'password' : 'text'}
                           onBlur={(e) => saveTextChange(config.key, e.target.value)}
                           className="w-full"
                           placeholder="Digite o novo valor e clique fora para salvar..."

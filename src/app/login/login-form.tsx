@@ -6,6 +6,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import Link from "next/link";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -89,9 +90,11 @@ export default function LoginForm() {
             />
           </div>
           <div className="space-y-2">
-            <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Senha
-            </label>
+            <div className="flex items-center justify-between">
+              <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Senha
+              </label>
+            </div>
             <Input
               id="password"
               type="password"
@@ -104,8 +107,11 @@ export default function LoginForm() {
           <Button type="submit" className="w-full" disabled={isLoading}>
             {isLoading ? "Entrando..." : "Entrar"}
           </Button>
+          <Link href="/recuperar-senha" className="text-xs font-medium text-primary hover:underline" tabIndex={-1}>
+            Esqueci a senha
+          </Link>
         </form>
-        
+
         {showGoogle && (
           <>
             <div className="relative my-6">
