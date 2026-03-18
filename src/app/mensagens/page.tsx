@@ -19,6 +19,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  image?: string;
 }
 
 export default function MessagesManagement() {
@@ -45,8 +46,8 @@ export default function MessagesManagement() {
       const conversations = new Map();
       if (Array.isArray(messages)) {
         messages.forEach((msg: any) => {
-          const otherId = msg.senderId === session?.user?.id ? msg.receiverId : msg.senderId;
-          const isUnread = !msg.isRead && msg.receiverId === session?.user?.id;
+          const otherId = String(msg.senderId) === String(session?.user?.id) ? msg.receiverId : msg.senderId;
+          const isUnread = !msg.isRead && String(msg.receiverId) === String(session?.user?.id);
           
           if (!conversations.has(otherId)) {
             conversations.set(otherId, {
@@ -116,33 +117,40 @@ export default function MessagesManagement() {
               <Button variant="link" onClick={() => setIsModalOpen(true)}>Inicie uma agora</Button>
             </div>
           ) : (
-            chats.map((chat) => (
-              <Link
-                key={chat.otherUserId}
-                href={`/mensagens/${chat.otherUserId}`}
-                className="flex items-center p-5 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
-              >
-                <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4">
-                  <UserIcon className="text-primary w-6 h-6" />
-                </div>
-                <div className="flex-1 min-w-0">
-                  <div className="font-semibold text-foreground flex items-center justify-between">
-                    <div className="flex items-center gap-2">
-                       <span>{availableUsers.find(u => u._id === chat.otherUserId)?.name || `Usuário ${chat.otherUserId.slice(-4)}`}</span>
-                       {chat.unreadCount > 0 && (
-                         <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-                           {chat.unreadCount}
-                         </span>
-                       )}
+            chats.map((chat) => {
+              const chatUser = availableUsers.find(u => String(u._id) === String(chat.otherUserId));
+              return (
+                <Link
+                  key={chat.otherUserId}
+                  href={`/mensagens/${chat.otherUserId}`}
+                  className="flex items-center p-5 hover:bg-muted/50 transition-colors border-b border-border last:border-0"
+                >
+                  {chatUser?.image ? (
+                    <img src={chatUser.image} alt="Avatar" className="w-12 h-12 rounded-full object-cover mr-4 shrink-0 shadow-sm" />
+                  ) : (
+                    <div className="w-12 h-12 bg-primary/10 rounded-full flex items-center justify-center mr-4 shrink-0">
+                      <UserIcon className="text-primary w-6 h-6" />
                     </div>
-                    <span className="text-xs font-normal text-muted-foreground">
-                      {new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </span>
+                  )}
+                  <div className="flex-1 min-w-0">
+                    <div className="font-semibold text-foreground flex items-center justify-between">
+                      <div className="flex items-center gap-2">
+                         <span>{chatUser?.name || `Usuário ${chat.otherUserId.slice(-4)}`}</span>
+                         {chat.unreadCount > 0 && (
+                           <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                             {chat.unreadCount}
+                           </span>
+                         )}
+                      </div>
+                      <span className="text-xs font-normal text-muted-foreground">
+                        {new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                      </span>
+                    </div>
+                    <div className="text-sm text-muted-foreground truncate">{chat.lastMessage}</div>
                   </div>
-                  <div className="text-sm text-muted-foreground truncate">{chat.lastMessage}</div>
-                </div>
-              </Link>
-            ))
+                </Link>
+              );
+            })
           )}
         </div>
 
@@ -180,9 +188,13 @@ export default function MessagesManagement() {
                         onClick={() => setIsModalOpen(false)}
                         className="flex items-center p-3 rounded-xl hover:bg-muted transition-colors"
                       >
-                        <div className="w-10 h-10 bg-muted-foreground/10 rounded-full flex items-center justify-center mr-3">
-                          <UserIcon className="w-5 h-5 text-muted-foreground" />
-                        </div>
+                        {user.image ? (
+                          <img src={user.image} alt="Avatar" className="w-10 h-10 rounded-full object-cover mr-3 shrink-0 shadow-sm" />
+                        ) : (
+                          <div className="w-10 h-10 bg-muted-foreground/10 rounded-full flex items-center justify-center mr-3 shrink-0">
+                            <UserIcon className="w-5 h-5 text-muted-foreground" />
+                          </div>
+                        )}
                         <div>
                           <div className="font-medium text-sm">{user.name}</div>
                           <div className="text-xs text-muted-foreground">{user.email}</div>

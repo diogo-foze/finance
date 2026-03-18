@@ -13,6 +13,7 @@ interface EditUserModalProps {
     name: string;
     email: string;
     role: string;
+    image?: string;
   } | null;
   open: boolean;
   onOpenChange: (open: boolean) => void;
@@ -84,8 +85,14 @@ export function EditUserModal({ user, open, onOpenChange, onSuccess }: EditUserM
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2">
-            <User className="w-5 h-5 text-primary" />
+          <DialogTitle className="flex items-center">
+            {user.image ? (
+              <img src={user.image} alt="Avatar" className="w-8 h-8 rounded-full object-cover shadow-sm mr-3" />
+            ) : (
+              <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center mr-3">
+                <User className="w-5 h-5 text-primary" />
+              </div>
+            )}
             Editar Usuário
           </DialogTitle>
         </DialogHeader>

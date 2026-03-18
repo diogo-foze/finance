@@ -245,9 +245,13 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
               <ArrowLeft className="w-5 h-5" />
             </Link>
             <div className="flex items-center gap-3">
-              <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center">
-                <UserIcon className="w-5 h-5 text-primary" />
-              </div>
+              {otherUser?.image ? (
+                <img src={otherUser.image} alt="Avatar" className="w-10 h-10 rounded-full object-cover shrink-0 shadow-sm" />
+              ) : (
+                <div className="w-10 h-10 bg-primary/10 rounded-full flex items-center justify-center shrink-0">
+                  <UserIcon className="w-5 h-5 text-primary" />
+                </div>
+              )}
               <h2 className="font-bold text-lg">{otherUser?.name || `Usuário ${userId.slice(-4)}`}</h2>
             </div>
           </div>

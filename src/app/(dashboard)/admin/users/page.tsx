@@ -16,6 +16,7 @@ interface DBUser {
   email: string;
   role: string;
   provider: string;
+  image?: string;
 }
 
 export default function AdminUsersPage() {

@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LayoutDashboard, Receipt, Landmark, PieChart, LogOut, Users, ShieldCheck, MessageSquare } from "lucide-react";
+import { LayoutDashboard, Receipt, Landmark, PieChart, LogOut, Users, ShieldCheck, MessageSquare, UserCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -85,10 +85,20 @@ export function Sidebar({ className }: { className?: string }) {
       )}
 
       <div className="p-4 mt-auto border-t border-sidebar-border">
-        <div className="mb-4 px-3 py-2">
-          <p className="text-xs font-medium text-white/50 truncate">{session?.user?.email}</p>
-          <p className="text-[10px] font-bold text-primary uppercase">{session?.user?.role}</p>
-        </div>
+        <Link 
+          href="/perfil" 
+          className="mb-2 flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group"
+        >
+          {session?.user?.image ? (
+            <img src={session.user.image} alt="Avatar" className="w-8 h-8 rounded-full object-cover border border-sidebar-border group-hover:border-primary/50" />
+          ) : (
+            <UserCircle className="w-8 h-8 text-sidebar-foreground/50 group-hover:text-primary transition-colors" />
+          )}
+          <div className="overflow-hidden">
+            <p className="text-xs font-semibold text-white truncate">{session?.user?.name || "Usuário"}</p>
+            <p className="text-[10px] text-white/50 truncate font-medium">{session?.user?.email}</p>
+          </div>
+        </Link>
         <Button 
           variant="ghost" 
           className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"

@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from "react";
 import { signIn } from "next-auth/react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -29,6 +29,18 @@ export default function LoginForm() {
     }
     fetchConfig();
   }, []);
+
+  const searchParams = useSearchParams();
+  const urlError = searchParams?.get("error");
+  const urlMessage = searchParams?.get("message");
+
+  useEffect(() => {
+    if (urlError === "GoogleRegistrationBlocked" && urlMessage) {
+      setError(decodeURIComponent(urlMessage));
+    } else if (urlError && urlError !== "CredentialsSignin") {
+      setError("Erro ao autenticar: " + urlError);
+    }
+  }, [urlError, urlMessage]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

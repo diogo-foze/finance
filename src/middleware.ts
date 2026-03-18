@@ -13,6 +13,8 @@ export const config = {
     "/receitas/:path*", 
     "/despesas/:path*", 
     "/relatorios/:path*",
-    "/admin/:path*"
+    "/admin/:path*",
+    "/mensagens/:path*",
+    "/perfil/:path*"
   ]
 };

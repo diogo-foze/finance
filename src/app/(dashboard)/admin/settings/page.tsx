@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Switch } from "@/components/ui/switch";
+import { Input } from "@/components/ui/input";
+import { Button } from "@/components/ui/button";
 import { Settings, ShieldCheck, Globe } from "lucide-react";
 import { toast } from "sonner";
 
@@ -49,8 +51,27 @@ export default function AdminSettingsPage() {
       toast.success("Configuração atualizada");
     } catch (error) {
       toast.error("Erro ao salvar configuração");
+      toast.error("Erro ao salvar configuração");
       // Rollback
       setConfigs(prev => prev.map(c => c.key === key ? { ...c, value: currentValue } : c));
+    }
+  };
+
+  const saveTextChange = async (key: string, newValue: string) => {
+    const originalConfig = configs.find(c => c.key === key);
+    if (!originalConfig || originalConfig.value === newValue) return;
+
+    try {
+      const res = await fetch("/api/admin/config", {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ key, value: newValue }),
+      });
+      if (!res.ok) throw new Error();
+      setConfigs(prev => prev.map(c => c.key === key ? { ...c, value: newValue } : c));
+      toast.success("Configuração atualizada");
+    } catch {
+      toast.error("Erro ao salvar configuração");
     }
   };
 
@@ -81,25 +102,42 @@ export default function AdminSettingsPage() {
             {loading ? (
               <div className="py-4 text-center text-muted-foreground">Carregando...</div>
             ) : (
-              configs.map((config) => (
-                <div key={config.key} className="flex items-center justify-between p-4 rounded-xl border border-border bg-muted/30">
-                  <div className="space-y-1">
-                    <p className="font-semibold text-sm">
-                      {config.key === 'google_login_enabled' ? 'Login via Google' : config.key}
-                    </p>
-                    <p className="text-xs text-muted-foreground">{config.description}</p>
-                    {config.isPublic && (
-                      <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-primary/10 text-primary font-bold uppercase tracking-wider mt-1">
-                        <Globe className="w-3 h-3" /> Público
-                      </span>
+              configs.map((config) => {
+                const isBoolean = typeof config.value === 'boolean';
+                return (
+                  <div key={config.key} className={`flex ${isBoolean ? 'items-center justify-between' : 'flex-col gap-3'} p-4 rounded-xl border border-border bg-muted/30`}>
+                    <div className="space-y-1 w-full">
+                      <p className="font-semibold text-sm">
+                        {config.key === 'google_login_enabled' ? 'Login via Google' :
+                         config.key === 'block_google_registration' ? 'Bloquear Novos Cadastros via Google' :
+                         config.key === 'google_registration_blocked_message' ? 'Mensagem de Bloqueio (Google)' : config.key}
+                      </p>
+                      <p className="text-xs text-muted-foreground">{config.description}</p>
+                      {config.isPublic && (
+                        <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded text-[10px] bg-primary/10 text-primary font-bold uppercase tracking-wider mt-1">
+                          <Globe className="w-3 h-3" /> Público
+                        </span>
+                      )}
+                    </div>
+                    {isBoolean ? (
+                      <Switch 
+                        checked={config.value === true}
+                        onCheckedChange={() => handleToggle(config.key, config.value)}
+                      />
+                    ) : (
+                      <div className="w-full">
+                        <Input 
+                          defaultValue={config.value}
+                          onBlur={(e) => saveTextChange(config.key, e.target.value)}
+                          className="w-full"
+                          placeholder="Digite o novo valor e clique fora para salvar..."
+                        />
+                        <p className="text-[10px] text-muted-foreground mt-1 px-1">Clique fora do campo após digitar para salvar.</p>
+                      </div>
                     )}
                   </div>
-                  <Switch 
-                    checked={config.value === true}
-                    onCheckedChange={() => handleToggle(config.key, config.value)}
-                  />
-                </div>
-              ))
+                );
+              })
             )}
           </CardContent>
         </Card>

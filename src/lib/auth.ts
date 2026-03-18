@@ -3,6 +3,7 @@ import GoogleProvider from "next-auth/providers/google"
 import CredentialsProvider from "next-auth/providers/credentials"
 import connectToDatabase from "@/lib/mongodb"
 import User from "@/models/User"
+import Config from "@/models/Config"
 import bcrypt from "bcryptjs"
 
 export const authOptions: NextAuthOptions = {
@@ -65,6 +66,13 @@ export const authOptions: NextAuthOptions = {
           await connectToDatabase();
           const existingUser = await User.findOne({ email: user.email });
           if (!existingUser) {
+            const blockConfig = await Config.findOne({ key: "block_google_registration" });
+            if (blockConfig?.value === true) {
+              const msgConfig = await Config.findOne({ key: "google_registration_blocked_message" });
+              const message = msgConfig?.value || "O cadastro de novos usuários está temporariamente bloqueado pelo administrador.";
+              return `/login?error=GoogleRegistrationBlocked&message=${encodeURIComponent(message)}`;
+            }
+
             await User.create({
               name: user.name,
               email: user.email,
@@ -72,6 +80,10 @@ export const authOptions: NextAuthOptions = {
               provider: "google",
               role: "user",
             });
+          } else if (!existingUser.image && user.image) {
+            // Synchronize Google image if the user doesn't have a profile picture yet
+            existingUser.image = user.image;
+            await existingUser.save();
           }
         }
         return true;
@@ -84,21 +96,31 @@ export const authOptions: NextAuthOptions = {
       if (token?.id && session.user) {
         session.user.id = token.id;
         session.user.role = token.role;
+        if (token.picture) session.user.image = token.picture;
+        if (token.name) session.user.name = token.name;
       }
       return session;
     },
-    async jwt({ token, user, account }: any) {
+    async jwt({ token, user, account, trigger, session }: any) {
+      // Handle client-side session update
+      if (trigger === "update" && session) {
+        if (session.image) token.picture = session.image;
+        if (session.name) token.name = session.name;
+      }
+
       if (user) {
-        if (account?.provider === "google") {
-          await connectToDatabase();
-          const dbUser = await User.findOne({ email: user.email });
-          if (dbUser) {
-            token.id = dbUser._id.toString();
-            token.role = dbUser.role || "user";
-          }
+        await connectToDatabase();
+        const dbUser = await User.findOne({ email: user.email });
+        if (dbUser) {
+          token.id = dbUser._id.toString();
+          token.role = dbUser.role || "user";
+          token.picture = dbUser.image || null;
+          token.name = dbUser.name;
         } else {
+          // Fallback if somehow missing
           token.id = user.id;
           token.role = user.role;
+          if (user.image) token.picture = user.image;
         }
       }
       return token;

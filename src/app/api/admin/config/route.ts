@@ -20,13 +20,27 @@ export async function GET() {
     
     // Seed default if empty
     if (configs.length === 0) {
-      const googleConfig = await Config.create({
-        key: "google_login_enabled",
-        value: true,
-        isPublic: true,
-        description: "Habilita o botão de login pelo Google na tela inicial"
-      });
-      return NextResponse.json([googleConfig]);
+      const googleConfig = await Config.create([
+        {
+          key: "google_login_enabled",
+          value: true,
+          isPublic: true,
+          description: "Habilita o botão de login pelo Google na tela inicial"
+        },
+        {
+          key: "block_google_registration",
+          value: false,
+          isPublic: false,
+          description: "Bloqueia o cadastro de NOVOS usuários através do login do Google."
+        },
+        {
+          key: "google_registration_blocked_message",
+          value: "O cadastro de novos usuários está temporariamente bloqueado pelo administrador.",
+          isPublic: false,
+          description: "Mensagem exibida quando um novo usuário tenta se cadastrar pelo Google e o bloqueio está ativo."
+        }
+      ]);
+      return NextResponse.json(googleConfig);
     }
 
     return NextResponse.json(configs);
