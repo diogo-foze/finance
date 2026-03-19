@@ -6,6 +6,7 @@
     "dev": "tsx server.ts",
     "build": "next build",
     "start": "cross-env NODE_ENV=production tsx server.ts",
+    "backup": "tsx backup-db.ts",
     "lint": "eslint"
   },
   "dependencies": {
