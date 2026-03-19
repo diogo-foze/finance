@@ -82,3 +82,49 @@ npm run build
 ```bash
 npm start
 ```
+
+
+## 📥 Backup e Restauração do Banco de Dados (MongoDB)
+
+Mantenha seus dados seguros realizando backups periódicos.
+
+### ☁️ MongoDB Atlas (Nuvem)
+Para fazer o backup de um cluster na nuvem:
+```bash
+# Backup
+mongodump --uri="mongodb+srv://<USUARIO>:<SENHA>@cluster0.mongodb.net/finansys" --out ./backup
+
+# Restauração
+mongorestore --uri="mongodb+srv://<USUARIO>:<SENHA>@cluster0.mongodb.net/finansys" --drop ./backup/finansys
+```
+
+### 💻 MongoDB Local (Sem instalar nada)
+Como o projeto já possui as ferramentas necessárias, você pode gerar um backup completo do banco de dados (formatado para o Docker) rodando:
+
+```bash
+# Gera o arquivo ./docker-init/init-db.js
+npm run backup
+```
+
+### 🛠️ Usando Ferramentas Externas (Opcional)
+Se você tiver o **[Database Tools](https://www.mongodb.com/try/download/database-tools)** instalado no seu PATH e preferir o formato de despejo padrão (`.bson`):
+
+```bash
+# Backup
+mongodump --uri="mongodb://localhost:27017/finansys" --out ./backup
+
+# Restauração
+mongorestore --uri="mongodb://localhost:27017/finansys" --drop ./backup/finansys
+```
+
+
+
+### 🐳 Via Docker (Recomendado)
+Se você estiver usando o `docker-compose` deste projeto:
+```bash
+# Backup (Cria a pasta 'backup' no diretório atual)
+docker-compose exec db mongodump --archive --gzip --db finansys > backup_finansys.gz
+
+# Restauração
+cat backup_finansys.gz | docker-compose exec -T db mongorestore --archive --gzip --drop
+```
