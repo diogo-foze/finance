@@ -88,6 +88,16 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
       toast.success(`${type} ${isEdit ? 'atualizada' : 'adicionada'} com sucesso!`);
       setOpen(false);
       
+      if (!isEdit) {
+        setFormData({
+          descricao: "",
+          valor: "",
+          data: new Date().toISOString().split('T')[0],
+          categoria: "",
+          tipoMovimentacao: "Fixo"
+        });
+      }
+      
       if (onSuccess) {
         onSuccess();
       } else {

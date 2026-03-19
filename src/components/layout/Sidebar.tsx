@@ -95,8 +95,8 @@ export function Sidebar({ className }: { className?: string }) {
             <UserCircle className="w-8 h-8 text-sidebar-foreground/50 group-hover:text-primary transition-colors" />
           )}
           <div className="overflow-hidden">
-            <p className="text-xs font-semibold text-white truncate">{session?.user?.name || "Usuário"}</p>
-            <p className="text-[10px] text-white/50 truncate font-medium">{session?.user?.email}</p>
+            <p className="text-xs font-semibold text-white group-hover:text-sidebar-accent-foreground transition-colors truncate">{session?.user?.name || "Usuário"}</p>
+            <p className="text-[10px] text-white/50 group-hover:text-sidebar-accent-foreground/70 transition-colors truncate font-medium">{session?.user?.email}</p>
           </div>
         </Link>
         <Button 
