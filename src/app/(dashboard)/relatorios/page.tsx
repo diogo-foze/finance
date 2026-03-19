@@ -4,12 +4,16 @@ import { useEffect, useState } from "react";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Bar, BarChart, ResponsiveContainer, XAxis, YAxis, Tooltip, PieChart, Pie, Cell, Legend, CartesianGrid } from "recharts";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
+import { Mail, Loader2 } from "lucide-react";
+import { toast } from "sonner";
 import { useVisibility } from "@/components/providers/VisibilityProvider";
 
 const COLORS = ["#0070f3", "#10b981", "#FFBB28", "#FF8042"];
 
 export default function RelatoriosPage() {
   const [loading, setLoading] = useState(true);
+  const [emailLoading, setEmailLoading] = useState(false);
   const [data, setData] = useState<{ barData: any[], pieData: any[] }>({ barData: [], pieData: [] });
   const { isVisible } = useVisibility();
 
@@ -87,6 +91,42 @@ export default function RelatoriosPage() {
     return new Intl.NumberFormat('pt-BR', { style: 'currency', currency: 'BRL' }).format(value);
   };
 
+  const handleSendEmail = async () => {
+    setEmailLoading(true);
+    try {
+      const today = new Date();
+      const month = today.toLocaleString("pt-BR", { month: "long" });
+      const year = today.getFullYear();
+      
+      const currentMonthData = data.barData.find(m => m.month === today.getMonth() && m.year === today.getFullYear());
+      
+      const totalReceitas = currentMonthData ? currentMonthData.receitas : 0;
+      const totalDespesas = currentMonthData ? currentMonthData.despesas : 0;
+      const saldo = totalReceitas - totalDespesas;
+
+      const res = await fetch("/api/relatorios/email", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          month: month.charAt(0).toUpperCase() + month.slice(1),
+          year,
+          totalReceitas,
+          totalDespesas,
+          saldo
+        })
+      });
+
+      const resBody = await res.json();
+      if (!res.ok) throw new Error(resBody.error || "Erro ao enviar e-mail.");
+      
+      toast.success("Relatório enviado para o seu e-mail!");
+    } catch (error: any) {
+      toast.error(error.message || "Falha ao enviar e-mail.");
+    } finally {
+      setEmailLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="space-y-4">
@@ -107,6 +147,12 @@ export default function RelatoriosPage() {
         <div>
            <h2 className="text-3xl font-bold tracking-tight">Relatórios</h2>
            <p className="text-zinc-500">Analise suas finanças com gráficos detalhados e interativos.</p>
+        </div>
+        <div className="flex items-center space-x-2">
+           <Button onClick={handleSendEmail} disabled={emailLoading || !hasData}>
+             {emailLoading ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : <Mail className="mr-2 h-4 w-4" />}
+             Enviar por E-mail
+           </Button>
         </div>
       </div>
       

@@ -59,7 +59,7 @@ export default function VerifyCodeForm() {
         <CardHeader className="space-y-2 text-center">
           <CardTitle className="text-2xl font-bold tracking-tight">Verificar Código</CardTitle>
           <CardDescription>
-            Enviamos um código de 6 dígitos para <strong className="text-foreground">{email}</strong>. Por favor, insira-o abaixo.
+            Enviamos um código para <strong className="text-foreground">{email}</strong>. Por favor, insira-o abaixo.
           </CardDescription>
         </CardHeader>
         <CardContent>

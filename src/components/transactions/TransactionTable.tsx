@@ -42,7 +42,7 @@ export function TransactionTable({ transactions, type, onRowClick }: Transaction
 
   // Estados de Filtro
   const [searchQuery, setSearchQuery] = useState("");
-  const [periodFilter, setPeriodFilter] = useState("all");
+  const [periodFilter, setPeriodFilter] = useState("Todos os Movimentos");
   const [customStartDate, setCustomStartDate] = useState("");
   const [customEndDate, setCustomEndDate] = useState("");
 
@@ -73,23 +73,23 @@ export function TransactionTable({ transactions, type, onRowClick }: Transaction
     }
 
     // 2. Filtro de Período (Extrato)
-    if (periodFilter !== "all" && filtered.length > 0) {
+    if (periodFilter !== "Todos os Movimentos" && filtered.length > 0) {
       const today = new Date();
       today.setHours(23, 59, 59, 999);
       
       let startDate = new Date(0); // 1970
       let endDate = new Date("2100-01-01");
 
-      if (periodFilter === "current_month") {
+      if (periodFilter === "Mês Atual") {
         startDate = new Date(today.getFullYear(), today.getMonth(), 1);
         endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
-      } else if (periodFilter === "last_3_months") {
+      } else if (periodFilter === "Últimos 3 Meses") {
         startDate = new Date(today.getFullYear(), today.getMonth() - 2, 1);
         endDate = new Date(today.getFullYear(), today.getMonth() + 1, 0, 23, 59, 59, 999);
-      } else if (periodFilter === "this_year") {
+      } else if (periodFilter === "Este Ano") {
         startDate = new Date(today.getFullYear(), 0, 1);
         endDate = new Date(today.getFullYear(), 11, 31, 23, 59, 59, 999);
-      } else if (periodFilter === "custom") {
+      } else if (periodFilter === "Personalizado (Entre datas)") {
         if (customStartDate) {
           startDate = new Date(customStartDate);
           startDate.setMinutes(startDate.getMinutes() + startDate.getTimezoneOffset());
@@ -149,21 +149,21 @@ export function TransactionTable({ transactions, type, onRowClick }: Transaction
           <label className="text-xs font-semibold text-muted-foreground flex items-center gap-1">
             <Calendar className="w-3 h-3" /> Período do Extrato
           </label>
-          <Select value={periodFilter} onValueChange={(val) => setPeriodFilter(val || "all")}>
+          <Select value={periodFilter} onValueChange={(val) => setPeriodFilter(val || "Todos os Movimentos")}>
             <SelectTrigger>
               <SelectValue placeholder="Todos os períodos" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todos os Movimentos</SelectItem>
-              <SelectItem value="current_month">Mês Atual</SelectItem>
-              <SelectItem value="last_3_months">Últimos 3 Meses</SelectItem>
-              <SelectItem value="this_year">Este Ano</SelectItem>
-              <SelectItem value="custom">Personalizado (Entre datas)</SelectItem>
+              <SelectItem value="Todos os Movimentos">Todos os Movimentos</SelectItem>
+              <SelectItem value="Mês Atual">Mês Atual</SelectItem>
+              <SelectItem value="Últimos 3 Meses">Últimos 3 Meses</SelectItem>
+              <SelectItem value="Este Ano">Este Ano</SelectItem>
+              <SelectItem value="Personalizado (Entre datas)">Personalizado (Entre datas)</SelectItem>
             </SelectContent>
           </Select>
         </div>
 
-        {periodFilter === "custom" && (
+        {periodFilter === "Personalizado (Entre datas)" && (
           <div className="flex flex-row gap-2 w-full sm:w-auto animate-in fade-in zoom-in duration-200">
             <div className="flex flex-col gap-1.5 w-1/2 sm:w-auto">
               <label className="text-xs font-semibold text-muted-foreground">Data Inicial</label>
