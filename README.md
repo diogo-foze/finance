@@ -53,4 +53,32 @@ docker-compose.yml: Orquestra tanto a aplicação quanto o banco de dados MongoD
 Como rodar no servidor:
 
 Copie o arquivo .env.example para .env e preencha as variáveis.
-Execute o comando: docker-compose up -d --build
+
+> **⚠️ AJUSTE IMPORTANTE PARA O DOCKER:**
+> Certifique-se de que a variável `MONGODB_URI` no seu arquivo `.env` esteja apontando para o nome do serviço do banco de dados no contêiner (`db`) e não para `localhost`.
+> Ela deve ficar exatamente assim:
+> `MONGODB_URI=mongodb://db:27017/finansys`
+
+Após configurar o `.env`, execute o comando:
+```bash
+docker-compose up -d --build
+```
+
+## Executando em Produção (Node.js)
+
+Para rodar o projeto em um ambiente de produção diretamente com o Node.js (sem utilizar contêineres), siga os passos abaixo certificando-se de ter configurado as variáveis de ambiente no arquivo `.env`:
+
+1. Instale as dependências:
+```bash
+npm install
+```
+
+2. Faça o build da aplicação:
+```bash
+npm run build
+```
+
+3. Inicie o servidor em modo de produção:
+```bash
+npm start
+```
