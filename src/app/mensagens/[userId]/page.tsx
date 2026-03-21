@@ -27,8 +27,8 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
   const markAsRead = useCallback(async (ids: string[]) => {
     if (!ids.length) return;
 
-    fetch("/api/messages", {
-      method: "PUT",
+    fetch("/api/messages/read", {
+      method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify({ messageIds: ids }),
     });
@@ -44,21 +44,14 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
   useEffect(() => {
     async function fetchData() {
       const [msgRes, userRes] = await Promise.all([
-        fetch("/api/messages"),
+        fetch(`/api/messages?recipientId=${userId}`),
         fetch("/api/users")
       ]);
 
-      const all = await msgRes.json();
+      const filtered = await msgRes.json();
       const users = await userRes.json();
 
-      const filtered = Array.isArray(all) ? all
-        .filter((m: any) =>
-          (String(m.senderId) === String(session?.user?.id) && String(m.receiverId) === String(userId)) ||
-          (String(m.senderId) === String(userId) && String(m.receiverId) === String(session?.user?.id))
-        )
-        .reverse() : [];
-
-      setMessages(filtered);
+      setMessages(Array.isArray(filtered) ? filtered : []);
       setOtherUser(users.find((u: any) => String(u._id) === String(userId)));
 
       const unreadIds = filtered
@@ -132,8 +125,8 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
     if (!inputText.trim()) return;
 
     if (editingMessage) {
-      const res = await fetch("/api/messages", {
-        method: "PUT",
+      const res = await fetch("/api/messages/edit", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ messageId: editingMessage._id, text: inputText }),
       });
@@ -207,10 +200,10 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
         return;
       }
 
-      fetch("/api/messages", {
-        method: "PUT",
+      fetch("/api/messages/delete", {
+        method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ messageId: msg._id, isDeleted: true }),
+        body: JSON.stringify({ messageId: msg._id }),
       }).then(res => {
         if (res.ok) {
           setMessages(prev => prev.map(m =>
@@ -252,7 +245,10 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
                   <UserIcon className="w-5 h-5 text-primary" />
                 </div>
               )}
-              <h2 className="font-bold text-lg">{otherUser?.name || `Usuário ${userId.slice(-4)}`}</h2>
+              <div className="flex flex-col">
+                <h2 className="font-bold text-lg leading-tight">{otherUser?.name || `Usuário ${userId.slice(-4)}`}</h2>
+                {otherUser?.username && <span className="text-xs font-bold text-primary">@{otherUser.username}</span>}
+              </div>
             </div>
           </div>
         </div>
@@ -312,21 +308,20 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
                       ) : (
                         <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
                       )}
-                      {!msg.isDeleted && (
-                        <div className="flex items-center justify-end gap-2 text-[10px] mt-1 opacity-70 min-w-16">
-                          {msg.isEdited && <span className="italic">(editada)</span>}
-                          <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
-                          {isMe && (
-                            <span className="ml-0.5">
-                              {msg.status === 'read' || msg.isRead ? (
-                                <CheckCheck className="w-3.5 h-3.5 text-white" />
-                              ) : (
-                                <Check className="w-3.5 h-3.5 text-zinc-300" />
-                              )}
-                            </span>
-                          )}
-                        </div>
-                      )}
+                      
+                      <div className="flex items-center justify-end gap-2 text-[10px] mt-1 opacity-70 min-w-16">
+                        {!msg.isDeleted && msg.isEdited && <span className="italic">(editada)</span>}
+                        <span>{new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+                        {isMe && !msg.isDeleted && (
+                          <span className="ml-0.5">
+                            {msg.status === 'read' || msg.isRead ? (
+                              <CheckCheck className="w-3.5 h-3.5 text-white" />
+                            ) : (
+                              <Check className="w-3.5 h-3.5 text-zinc-300" />
+                            )}
+                          </span>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>

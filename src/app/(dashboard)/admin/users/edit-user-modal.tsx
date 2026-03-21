@@ -12,6 +12,7 @@ interface EditUserModalProps {
     _id: string;
     name: string;
     email: string;
+    username?: string;
     role: string;
     image?: string;
   } | null;
@@ -25,6 +26,7 @@ export function EditUserModal({ user, open, onOpenChange, onSuccess }: EditUserM
   const [formData, setFormData] = useState({
     name: user?.name || "",
     email: user?.email || "",
+    username: user?.username || "",
     password: "",
   });
 
@@ -34,6 +36,7 @@ export function EditUserModal({ user, open, onOpenChange, onSuccess }: EditUserM
       setFormData({
         name: user.name,
         email: user.email,
+        username: user.username || "",
         password: "",
       });
     }
@@ -42,7 +45,7 @@ export function EditUserModal({ user, open, onOpenChange, onSuccess }: EditUserM
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!user) return;
-    
+
     setLoading(true);
 
     try {
@@ -55,6 +58,7 @@ export function EditUserModal({ user, open, onOpenChange, onSuccess }: EditUserM
           id: user._id,
           name: formData.name,
           email: formData.email,
+          username: formData.username,
           password: formData.password,
           role: user.role
         }),
@@ -68,7 +72,7 @@ export function EditUserModal({ user, open, onOpenChange, onSuccess }: EditUserM
 
       toast.success("Usuário atualizado com sucesso!");
       onOpenChange(false);
-      
+
       if (onSuccess) {
         onSuccess();
       }
@@ -99,22 +103,34 @@ export function EditUserModal({ user, open, onOpenChange, onSuccess }: EditUserM
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Nome Completo</label>
-            <Input 
-              required 
+            <Input
+              required
               value={formData.name}
-              onChange={(e) => setFormData({...formData, name: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               placeholder="Ex: João Silva"
             />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Email</label>
-            <Input 
+            <Input
               type="email"
-              required 
+              required
               value={formData.email}
-              onChange={(e) => setFormData({...formData, email: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               placeholder="joao@exemplo.com"
             />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-primary">@nome único</label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-muted-foreground font-bold">@</span>
+              <Input
+                value={formData.username}
+                onChange={(e) => setFormData({ ...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "") })}
+                placeholder="username"
+                className="pl-8 font-bold"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium flex items-center gap-1">
@@ -122,17 +138,17 @@ export function EditUserModal({ user, open, onOpenChange, onSuccess }: EditUserM
               <span className="text-[10px] text-muted-foreground font-normal">(Deixe em branco para não alterar)</span>
             </label>
             <div className="relative">
-              <Input 
+              <Input
                 type="password"
                 value={formData.password}
-                onChange={(e) => setFormData({...formData, password: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, password: e.target.value })}
                 placeholder="••••••••"
                 className="pl-9"
               />
               <Key className="w-4 h-4 absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
             </div>
           </div>
-          
+
           <div className="pt-2 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)}>Cancelar</Button>
             <Button type="submit" disabled={loading}>{loading ? "Salvando..." : "Salvar Alterações"}</Button>

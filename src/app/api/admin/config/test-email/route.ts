@@ -1,11 +1,10 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession } from "@/lib/auth-helper";
 import nodemailer from "nodemailer";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(request);
     if (session?.user?.role !== "admin") {
       return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     }

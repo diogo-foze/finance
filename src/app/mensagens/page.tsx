@@ -19,6 +19,7 @@ interface User {
   _id: string;
   name: string;
   email: string;
+  username?: string;
   image?: string;
 }
 
@@ -37,10 +38,10 @@ export default function MessagesManagement() {
         fetch("/api/messages"),
         fetch("/api/users")
       ]);
-      
+
       const messages = await msgRes.json();
       const users = await userRes.json();
-      
+
       setAvailableUsers(Array.isArray(users) ? users : []);
 
       const conversations = new Map();
@@ -48,7 +49,7 @@ export default function MessagesManagement() {
         messages.forEach((msg: any) => {
           const otherId = String(msg.senderId) === String(session?.user?.id) ? msg.receiverId : msg.senderId;
           const isUnread = !msg.isRead && String(msg.receiverId) === String(session?.user?.id);
-          
+
           if (!conversations.has(otherId)) {
             conversations.set(otherId, {
               otherUserId: otherId,
@@ -72,8 +73,8 @@ export default function MessagesManagement() {
 
   useEffect(() => {
     if (session) {
-       fetchData();
-       setUnreadCount(0); // Clear local count when viewing list (or keep it if you want it to persist until read)
+      fetchData();
+      setUnreadCount(0); // Clear local count when viewing list (or keep it if you want it to persist until read)
     }
   }, [session, fetchData]);
 
@@ -90,8 +91,9 @@ export default function MessagesManagement() {
     }
   }, [socket, fetchData, setUnreadCount]);
 
-  const filteredUsers = availableUsers.filter(u => 
-    u.name.toLowerCase().includes(searchTerm.toLowerCase()) || 
+  const filteredUsers = availableUsers.filter(u =>
+    u.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (u.username && u.username.toLowerCase().includes(searchTerm.toLowerCase().replace("@", ""))) ||
     u.email.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
@@ -135,12 +137,13 @@ export default function MessagesManagement() {
                   <div className="flex-1 min-w-0">
                     <div className="font-semibold text-foreground flex items-center justify-between">
                       <div className="flex items-center gap-2">
-                         <span>{chatUser?.name || `Usuário ${chat.otherUserId.slice(-4)}`}</span>
-                         {chat.unreadCount > 0 && (
-                           <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
-                             {chat.unreadCount}
-                           </span>
-                         )}
+                        <span>{chatUser?.name || `Usuário ${chat.otherUserId.slice(-4)}`}</span>
+                        {chatUser?.username && <span className="text-xs font-bold text-primary">@{chatUser.username}</span>}
+                        {chat.unreadCount > 0 && (
+                          <span className="bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full shadow-sm animate-pulse">
+                            {chat.unreadCount}
+                          </span>
+                        )}
                       </div>
                       <span className="text-xs font-normal text-muted-foreground">
                         {new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
@@ -164,7 +167,7 @@ export default function MessagesManagement() {
                   <X className="w-5 h-5" />
                 </Button>
               </div>
-              
+
               <div className="p-4">
                 <div className="relative mb-4">
                   <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
@@ -197,7 +200,7 @@ export default function MessagesManagement() {
                         )}
                         <div>
                           <div className="font-medium text-sm">{user.name}</div>
-                          <div className="text-xs text-muted-foreground">{user.email}</div>
+                          <div className="text-xs font-bold text-primary">@{user.username}</div>
                         </div>
                       </Link>
                     ))

@@ -1,6 +1,6 @@
 services:
   db:
-    image: mongo:latest
+    image: mongo:4.4
     container_name: finansys-mongodb
     restart: always
     ports:

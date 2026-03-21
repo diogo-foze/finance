@@ -1,19 +1,31 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession, unauthorizedResponse } from "@/lib/auth-helper";
 import connectToDatabase from "@/lib/mongodb";
 import Despesa from "@/models/Despesa";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(request);
 
     if (!session || !session.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
+    const { searchParams } = new URL(request.url);
+    const startDate = searchParams.get("startDate");
+    const endDate = searchParams.get("endDate");
+
     await connectToDatabase();
-    const despesas = await Despesa.find({ userId: session.user.id }).sort({ dataVencimento: -1 });
+    
+    let query: any = { userId: session.user.id };
+    
+    if (startDate || endDate) {
+      query.dataVencimento = {};
+      if (startDate) query.dataVencimento.$gte = new Date(startDate);
+      if (endDate) query.dataVencimento.$lte = new Date(endDate);
+    }
+
+    const despesas = await Despesa.find(query).sort({ dataVencimento: -1 });
 
     return NextResponse.json(despesas);
   } catch (error) {
@@ -24,10 +36,10 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(request);
 
     if (!session || !session.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { descricao, valor, data, categoria, tipoMovimentacao } = await request.json();
@@ -46,6 +58,10 @@ export async function POST(request: Request) {
       tipoMovimentacao,
     });
 
+    if ((global as any).io) {
+      (global as any).io.emit("data_updated", { userId: session.user.id });
+    }
+
     return NextResponse.json(novaDespesa, { status: 201 });
   } catch (error) {
     console.error("Erro ao criar despesa:", error);
@@ -55,10 +71,10 @@ export async function POST(request: Request) {
 
 export async function PUT(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(request);
 
     if (!session || !session.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { id, descricao, valor, data, categoria, tipoMovimentacao } = await request.json();
@@ -84,6 +100,10 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Despesa não encontrada ou não autorizada" }, { status: 404 });
     }
 
+    if ((global as any).io) {
+      (global as any).io.emit("data_updated", { userId: session.user.id });
+    }
+
     return NextResponse.json(updatedDespesa);
   } catch (error) {
     console.error("Erro ao atualizar despesa:", error);
@@ -93,10 +113,10 @@ export async function PUT(request: Request) {
 
 export async function DELETE(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(request);
 
     if (!session || !session.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     const { searchParams } = new URL(request.url);
@@ -111,6 +131,10 @@ export async function DELETE(request: Request) {
 
     if (!deletedDespesa) {
       return NextResponse.json({ error: "Despesa não encontrada ou não autorizada" }, { status: 404 });
+    }
+
+    if ((global as any).io) {
+      (global as any).io.emit("data_updated", { userId: session.user.id });
     }
 
     return NextResponse.json({ message: "Despesa excluída com sucesso" });

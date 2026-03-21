@@ -18,6 +18,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
   const [formData, setFormData] = useState({
     name: "",
     email: "",
+    username: "",
     password: "",
     role: "user"
   });
@@ -46,6 +47,7 @@ export function UserForm({ onSuccess }: UserFormProps) {
       setFormData({
         name: "",
         email: "",
+        username: "",
         password: "",
         role: "user"
       });
@@ -89,6 +91,18 @@ export function UserForm({ onSuccess }: UserFormProps) {
               onChange={(e) => setFormData({...formData, email: e.target.value})}
               placeholder="joao@exemplo.com"
             />
+          </div>
+          <div className="space-y-2">
+            <label className="text-sm font-medium text-primary">@nome único (opcional)</label>
+            <div className="relative">
+              <span className="absolute left-3 top-2.5 text-muted-foreground font-bold">@</span>
+              <Input 
+                value={formData.username}
+                onChange={(e) => setFormData({...formData, username: e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, "")})}
+                placeholder="username"
+                className="pl-8 font-bold"
+              />
+            </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Senha Inicial</label>

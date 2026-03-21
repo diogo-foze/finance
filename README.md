@@ -128,3 +128,22 @@ docker-compose exec db mongodump --archive --gzip --db finansys > backup_finansy
 # Restauração
 cat backup_finansys.gz | docker-compose exec -T db mongorestore --archive --gzip --drop
 ```
+
+---
+
+## 🚀 Como Restaurar Dados em uma Instalação Nova
+
+Se você acabou de instalar o FinanSys e quer trazer seus dados de volta, existem três formas:
+
+### 1. 🖥️ Via Interface de Configuração (Novo!)
+Acesse a URL `/setup` no seu navegador após subir o sistema. 
+Se o seu banco de dados estiver vazio, você verá uma tela de boas-vindas com um botão **"Começar Importação"**. Ele lerá automaticamente o arquivo `docker-init/init-db.js` e preencherá o sistema para você.
+
+### 2. 🐳 Via Docker (Automático)
+Ao subir o projeto com `docker-compose up`, o MongoDB carrega automaticamente qualquer arquivo `.js` que esteja na pasta `./docker-init`. Basta garantir que seu backup se chame `init-db.js` antes de iniciar os contêineres pela primeira vez.
+
+### 🛠️ 3. Importação Manual (MongoDB Shell)
+Caso queira rodar manualmente pelo terminal:
+```bash
+mongosh "sua_uri_de_conexao" docker-init/init-db.js
+```

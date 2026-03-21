@@ -1,12 +1,11 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth/next";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession } from "@/lib/auth-helper";
 import Message from "@/models/Message";
 import connectToDatabase from "@/lib/mongodb";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(request);
     if (!session) return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
 
     await connectToDatabase();
@@ -14,6 +13,7 @@ export async function GET() {
     const unreadCount = await Message.countDocuments({
       receiverId: session.user.id,
       isRead: false,
+      isDeleted: { $ne: true }
     });
 
     return NextResponse.json({ unreadCount });

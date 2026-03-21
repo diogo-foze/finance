@@ -48,7 +48,10 @@ app.prepare().then(() => {
     },
   });
 
-  const userSockets = new Map<string, string>();
+  // Attach io to global object for API route access
+  (global as any).io = io;
+  (global as any).userSockets = new Map<string, string>();
+  const userSockets = (global as any).userSockets;
 
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);

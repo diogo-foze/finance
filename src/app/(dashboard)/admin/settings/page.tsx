@@ -179,7 +179,7 @@ export default function AdminSettingsPage() {
               <div className="divide-y divide-border">
                 {configs
                   .filter(c => {
-                    if (activeTab === "auth") return c.key.includes("google");
+                    if (activeTab === "auth") return c.key.includes("google") || c.key.includes("registration");
                     if (activeTab === "smtp") return c.key.includes("smtp");
                     return true;
                   })
@@ -191,8 +191,10 @@ export default function AdminSettingsPage() {
                           <div className="space-y-1 pr-4">
                             <p className="font-bold text-zinc-900 flex items-center gap-2">
                               {config.key === 'google_login_enabled' ? 'Login via Google' :
-                               config.key === 'block_google_registration' ? 'Bloquear Novos Cadastros' :
-                               config.key === 'google_registration_blocked_message' ? 'Mensagem de Bloqueio' : 
+                               config.key === 'block_google_registration' ? 'Bloquear Cadastro Google' :
+                               config.key === 'google_registration_blocked_message' ? 'Mensagem Bloqueio Google' : 
+                               config.key === 'block_external_registration' ? 'Bloquear Cadastro Manual' :
+                               config.key === 'external_registration_blocked_message' ? 'Mensagem Bloqueio Manual' : 
                                config.key === 'smtp_host' ? 'Servidor SMTP (Host)' :
                                config.key === 'smtp_port' ? 'Porta SMTP' :
                                config.key === 'smtp_user' ? 'Usuário SMTP' :
@@ -227,7 +229,7 @@ export default function AdminSettingsPage() {
                     );
                   })
                 }
-                {configs.filter(c => activeTab === "auth" ? c.key.includes("google") : c.key.includes("smtp")).length === 0 && (
+                {configs.filter(c => activeTab === "auth" ? (c.key.includes("google") || c.key.includes("registration")) : c.key.includes("smtp")).length === 0 && (
                   <div className="p-10 text-center text-muted-foreground italic">
                     Nenhuma configuração encontrada nesta categoria.
                   </div>

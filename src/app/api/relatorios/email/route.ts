@@ -1,18 +1,20 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession } from "@/lib/auth-helper";
 import connectToDatabase from "@/lib/mongodb";
 import Config from "@/models/Config";
 import nodemailer from "nodemailer";
 
 export async function POST(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(request);
     if (!session || !session.user || !session.user.email) {
       return NextResponse.json({ error: "Não autorizado ou e-mail indisponível." }, { status: 401 });
     }
 
-    const { month, year, totalReceitas, totalDespesas, saldo } = await request.json();
+    const { month, year, period: periodLabel, totalReceitas, totalDespesas, saldo } = await request.json();
+
+    // Determine the period display text
+    const displayPeriod = periodLabel || (month && year ? `${month} de ${year}` : "Período Personalizado");
 
     await connectToDatabase();
 
@@ -48,7 +50,7 @@ export async function POST(request: Request) {
     await transporter.sendMail({
       from: `"FinanSys" <${fromEmail || smtpUser}>`,
       to: session.user.email as string,
-      subject: `Relatório Financeiro: ${month}/${year}`,
+      subject: `Relatório Financeiro: ${displayPeriod}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; border: 1px solid #eee; border-radius: 8px; overflow: hidden;">
           <div style="background-color: #0f172a; padding: 20px; text-align: center;">
@@ -56,7 +58,7 @@ export async function POST(request: Request) {
           </div>
           <div style="padding: 30px;">
             <h2 style="color: #333;">Olá, ${session.user.name || 'Usuário'}!</h2>
-            <p style="color: #555; line-height: 1.5;">Aqui está o seu resumo financeiro referente ao período de <strong>${month} de ${year}</strong>.</p>
+            <p style="color: #555; line-height: 1.5;">Aqui está o seu resumo financeiro referente ao período de <strong>${displayPeriod}</strong>.</p>
             
             <div style="background-color: #f8fafc; border: 1px dashed #cbd5e1; border-radius: 8px; padding: 20px; margin: 30px 0;">
               <table style="width: 100%; text-align: left; border-collapse: collapse;">

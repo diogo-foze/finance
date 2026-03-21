@@ -17,19 +17,29 @@ export default function LoginForm() {
   const [showGoogle, setShowGoogle] = useState(true);
 
   useEffect(() => {
-    async function fetchConfig() {
+    async function checkSetupAndLoadConfig() {
       try {
+        // Double check if system needs setup
+        const setupRes = await fetch("/api/setup/import");
+        if (setupRes.ok) {
+          const setupData = await setupRes.json();
+          if (setupData.isEmpty) {
+            router.push("/setup");
+            return;
+          }
+        }
+
         const res = await fetch("/api/config");
         const config = await res.json();
         if (config.google_login_enabled !== undefined) {
           setShowGoogle(config.google_login_enabled);
         }
       } catch (error) {
-        console.error("Erro ao carregar configuração pública:", error);
+        console.error("Erro ao carregar configurações iniciais:", error);
       }
     }
-    fetchConfig();
-  }, []);
+    checkSetupAndLoadConfig();
+  }, [router]);
 
   const searchParams = useSearchParams();
   const urlError = searchParams?.get("error");
@@ -86,6 +96,7 @@ export default function LoginForm() {
               placeholder="seu@email.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
+              autoComplete="off"
               required
             />
           </div>
@@ -100,6 +111,7 @@ export default function LoginForm() {
               type="password"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
+              autoComplete="new-password"
               required
             />
           </div>
@@ -110,6 +122,13 @@ export default function LoginForm() {
           <Link href="/recuperar-senha" className="text-xs font-medium text-primary hover:underline" tabIndex={-1}>
             Esqueci a senha
           </Link>
+
+          <div className="text-center pt-2 border-t border-zinc-100 mt-4">
+            <span className="text-xs text-muted-foreground">Novo por aqui? </span>
+            <Link href="/register" className="text-xs font-bold text-primary hover:underline">
+              Crie uma conta
+            </Link>
+          </div>
         </form>
 
         {showGoogle && (

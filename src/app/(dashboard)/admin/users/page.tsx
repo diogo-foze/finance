@@ -14,6 +14,7 @@ interface DBUser {
   _id: string;
   name: string;
   email: string;
+  username?: string;
   role: string;
   provider: string;
   image?: string;
@@ -80,9 +81,9 @@ export default function AdminUsersPage() {
         <UserForm onSuccess={fetchUsers} />
       </div>
 
-      <EditUserModal 
-        user={editingUser} 
-        open={!!editingUser} 
+      <EditUserModal
+        user={editingUser}
+        open={!!editingUser}
         onOpenChange={(open) => !open && setEditingUser(null)}
         onSuccess={fetchUsers}
       />
@@ -96,6 +97,7 @@ export default function AdminUsersPage() {
             <TableHeader>
               <TableRow>
                 <TableHead>Nome</TableHead>
+                <TableHead>@nome</TableHead>
                 <TableHead>Email</TableHead>
                 <TableHead>Nível</TableHead>
                 <TableHead>Provedor</TableHead>
@@ -106,13 +108,13 @@ export default function AdminUsersPage() {
               {users.map((user) => (
                 <TableRow key={user._id}>
                   <TableCell className="font-medium">
-                    <button 
+                    <button
                       onClick={() => setEditingUser(user)}
-                      className="hover:text-primary hover:underline transition-all text-left font-bold"
-                    >
-                      {user.name}
+                      className="hover:text-primary hover:underline transition-all text-left font-bold">
+                      {user.name || "---"}
                     </button>
                   </TableCell>
+                  <TableCell>@{user.username || "---"}</TableCell>
                   <TableCell>{user.email}</TableCell>
                   <TableCell>
                     <Badge variant={user.role === "admin" ? "default" : "secondary"}>
@@ -121,25 +123,25 @@ export default function AdminUsersPage() {
                   </TableCell>
                   <TableCell className="capitalize">{user.provider}</TableCell>
                   <TableCell className="text-right space-x-2">
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => setEditingUser(user)}
                       title="Editar Usuário"
                     >
                       <Edit className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="outline" 
-                      size="sm" 
+                    <Button
+                      variant="outline"
+                      size="sm"
                       onClick={() => toggleRole(user)}
                       title="Alterar Nível"
                     >
                       <Shield className="h-4 w-4" />
                     </Button>
-                    <Button 
-                      variant="destructive" 
-                      size="sm" 
+                    <Button
+                      variant="destructive"
+                      size="sm"
                       onClick={() => handleDelete(user._id)}
                       title="Excluir Usuário"
                     >

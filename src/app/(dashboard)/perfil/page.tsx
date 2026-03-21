@@ -13,6 +13,7 @@ import { useRef } from "react";
 export default function PerfilPage() {
   const { data: session, update } = useSession();
   const [name, setName] = useState("");
+  const [username, setUsername] = useState("");
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [preview, setPreview] = useState<string>("");
   const [isSaving, setIsSaving] = useState(false);
@@ -21,6 +22,7 @@ export default function PerfilPage() {
   useEffect(() => {
     if (session?.user) {
       setName(session.user.name || "");
+      setUsername((session.user as any).username || "");
       setPreview(session.user.image || "");
     }
   }, [session]);
@@ -45,6 +47,7 @@ export default function PerfilPage() {
     try {
       const formData = new FormData();
       formData.append("name", name);
+      formData.append("username", username);
       if (imageFile) {
         formData.append("image", imageFile);
       }
@@ -58,8 +61,8 @@ export default function PerfilPage() {
       if (!res.ok) throw new Error(data.error);
 
       // Force NextAuth to update the session locally if supported, otherwise just reload
-      await update({ name: data.user.name, image: data.user.image });
-      
+      await update({ name: data.user.name, image: data.user.image, username: data.user.username });
+
       toast.success("Perfil atualizado com sucesso");
     } catch (error: any) {
       toast.error(error.message || "Erro ao atualizar perfil");
@@ -84,9 +87,9 @@ export default function PerfilPage() {
             <CardDescription>Estes dados serão exibidos no sistema.</CardDescription>
           </CardHeader>
           <CardContent className="space-y-6">
-            
+
             <div className="flex flex-col sm:flex-row gap-6 items-start sm:items-center">
-              <div 
+              <div
                 className="relative group rounded-full overflow-hidden w-24 h-24 bg-muted border-4 border-background shadow-md shrink-0 flex items-center justify-center cursor-pointer"
                 onClick={() => fileInputRef.current?.click()}
               >
@@ -102,9 +105,9 @@ export default function PerfilPage() {
               <div className="space-y-2 flex-1 w-full">
                 <label className="text-sm font-medium">Foto de Perfil</label>
                 <div className="flex items-center gap-2">
-                  <Button 
-                    type="button" 
-                    variant="outline" 
+                  <Button
+                    type="button"
+                    variant="outline"
                     onClick={() => fileInputRef.current?.click()}
                   >
                     <Upload className="w-4 h-4 mr-2" />
@@ -112,10 +115,10 @@ export default function PerfilPage() {
                   </Button>
                   {imageFile && <span className="text-xs text-muted-foreground">{imageFile.name}</span>}
                 </div>
-                <input 
-                  type="file" 
-                  ref={fileInputRef} 
-                  className="hidden" 
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
                   accept="image/*"
                   onChange={handleFileChange}
                 />
@@ -124,9 +127,24 @@ export default function PerfilPage() {
             </div>
 
             <div className="space-y-2">
+              <label className="text-sm font-medium">@user-name</label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-muted-foreground font-bold">@</span>
+                <Input
+                  placeholder="seu-username"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value.toLowerCase().replace(/[^a-z0-9_-]/g, ""))}
+                  className="pl-8 font-bold"
+                  required
+                />
+              </div>
+              <p className="text-[10px] text-muted-foreground">Este é o seu identificador único no sistema.</p>
+            </div>
+
+            <div className="space-y-2">
               <label className="text-sm font-medium">Nome Completo</label>
-              <Input 
-                placeholder="Seu nome" 
+              <Input
+                placeholder="Seu nome"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
                 required
@@ -135,7 +153,7 @@ export default function PerfilPage() {
 
             <div className="space-y-2">
               <label className="text-sm font-medium">Email</label>
-              <Input 
+              <Input
                 value={session?.user?.email || ""}
                 disabled
                 className="bg-muted/50 text-muted-foreground"

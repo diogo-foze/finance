@@ -11,6 +11,11 @@ const UserSchema = new Schema(
       required: true,
       unique: true,
     },
+    username: {
+      type: String,
+      unique: true,
+      sparse: true, // Allow nulls during migration but ensure uniqueness when present
+    },
     password: {
       type: String,
       select: false, // Don't return password by default
@@ -39,9 +44,22 @@ const UserSchema = new Schema(
       type: Date,
       default: Date.now,
     },
+    isEmailVerified: {
+      type: Boolean,
+      default: false,
+    },
+    verificationCode: {
+      type: String,
+      select: false,
+    },
   },
   { timestamps: true }
 );
+
+// Force refresh model if schema changed
+if (process.env.NODE_ENV === "development") {
+  delete (mongoose as any).models.User;
+}
 
 const User = models.User || model("User", UserSchema);
 

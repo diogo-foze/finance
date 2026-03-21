@@ -1,17 +1,16 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession } from "@/lib/auth-helper";
 import connectToDatabase from "@/lib/mongodb";
 import Config from "@/models/Config";
 
-async function isAdmin() {
-  const session = await getServerSession(authOptions);
+async function isAdmin(request: Request) {
+  const session = await getAuthSession(request);
   return session?.user?.role === "admin";
 }
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    if (!(await isAdmin())) {
+    if (!(await isAdmin(request))) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     }
 
@@ -67,6 +66,18 @@ export async function GET() {
         value: "nao-responda@dominio.com",
         isPublic: false,
         description: "Endereço de e-mail do remetente enviado aos clientes."
+      },
+      {
+        key: "block_external_registration",
+        value: false,
+        isPublic: true,
+        description: "Bloqueia a criação de novas contas pelo formulário de cadastro."
+      },
+      {
+        key: "external_registration_blocked_message",
+        value: "O cadastro de novos usuários está temporariamente desativado.",
+        isPublic: true,
+        description: "Mensagem exibida quando um usuário tenta se cadastrar e o bloqueio está ativo."
       }
     ];
 
@@ -86,7 +97,7 @@ export async function GET() {
 
 export async function PATCH(request: Request) {
   try {
-    if (!(await isAdmin())) {
+    if (!(await isAdmin(request))) {
       return NextResponse.json({ error: "Não autorizado" }, { status: 403 });
     }
 

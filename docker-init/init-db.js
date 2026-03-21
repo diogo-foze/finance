@@ -3,13 +3,14 @@ db = db.getSiblingDB('finansys');
 db.users.insertMany([
   {
     "_id": ObjectId("69b7562729955a7a81143409"),
-    "name": "Diogo Soares ",
+    "name": "Diogo Soares",
     "email": "diogodsdf@gmail.com",
     "provider": "credentials",
     "__v": 0,
     "role": "admin",
-    "updatedAt": new Date("2026-03-17T00:42:27.726Z"),
-    "lastActive": new Date("2026-03-17T00:42:27.726Z")
+    "updatedAt": new Date("2026-03-19T14:51:58.289Z"),
+    "lastActive": new Date("2026-03-19T14:51:58.289Z"),
+    "image": "/uploads/avatars/1773860691857-IMG4805.jpeg"
   },
   {
     "_id": ObjectId("69b76072198bc2846bccbdfe"),
@@ -18,20 +19,22 @@ db.users.insertMany([
     "provider": "credentials",
     "role": "admin",
     "createdAt": new Date("2026-03-16T01:44:18.097Z"),
-    "updatedAt": new Date("2026-03-17T00:18:11.997Z"),
+    "updatedAt": new Date("2026-03-19T01:45:01.499Z"),
     "__v": 0,
-    "lastActive": new Date("2026-03-17T00:18:11.996Z")
+    "lastActive": new Date("2026-03-19T01:45:01.498Z"),
+    "image": "/uploads/avatars/1773860497564-IMG1693.jpeg"
   },
   {
     "_id": ObjectId("69b7653cdb63a6823601fb3c"),
     "name": "Erick Marchezi",
-    "email": "erick@gmail.com",
+    "email": "erickms6541@gmail.com",
     "provider": "credentials",
     "role": "admin",
     "createdAt": new Date("2026-03-16T02:04:44.657Z"),
-    "updatedAt": new Date("2026-03-16T23:12:21.073Z"),
+    "updatedAt": new Date("2026-03-18T20:28:03.550Z"),
     "__v": 0,
-    "lastActive": new Date("2026-03-16T23:12:21.073Z")
+    "lastActive": new Date("2026-03-18T20:28:03.548Z"),
+    "image": "/uploads/avatars/1773860626019-IMG3829.jpeg"
   },
   {
     "_id": ObjectId("69b89cabd1af3558cc3f7703"),
@@ -42,7 +45,31 @@ db.users.insertMany([
     "role": "user",
     "lastActive": new Date("2026-03-17T00:42:49.397Z"),
     "createdAt": new Date("2026-03-17T00:13:31.084Z"),
-    "updatedAt": new Date("2026-03-17T00:42:49.398Z"),
+    "updatedAt": new Date("2026-03-18T21:23:58.973Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69baf490e1ad9cab447ba1cf"),
+    "name": "Evolution Tech",
+    "email": "contato755@gmail.com",
+    "image": "https://lh3.googleusercontent.com/a/ACg8ocJkUk03cCjzu8cEtGIhG78JEnhsOZfHlFEZkb9CYK0Chmp7RjT8=s96-c",
+    "provider": "google",
+    "role": "user",
+    "lastActive": new Date("2026-03-18T18:53:05.886Z"),
+    "createdAt": new Date("2026-03-18T18:53:04.679Z"),
+    "updatedAt": new Date("2026-03-18T20:30:11.889Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bafe49e1ad9cab447ba51a"),
+    "name": "Nfe Evolution",
+    "email": "nfevolutiontech@gmail.com",
+    "image": "https://lh3.googleusercontent.com/a/ACg8ocIAjthMjNpMmBG7UA4sFWI5TmYwnhXLEXroTDgjR-BShIEOIg=s96-c",
+    "provider": "google",
+    "role": "user",
+    "lastActive": new Date("2026-03-18T19:34:34.991Z"),
+    "createdAt": new Date("2026-03-18T19:34:33.614Z"),
+    "updatedAt": new Date("2026-03-18T20:30:04.005Z"),
     "__v": 0
   }
 ]);
@@ -290,6 +317,174 @@ db.despesas.insertMany([
     "createdAt": new Date("2026-03-16T21:39:21.971Z"),
     "updatedAt": new Date("2026-03-16T21:39:21.971Z"),
     "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb4244501decb737467c4a"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Cartão Inter",
+    "valor": 123,
+    "dataVencimento": new Date("2026-01-01T00:00:00.000Z"),
+    "categoria": "Cartão",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:24:36.583Z"),
+    "updatedAt": new Date("2026-03-19T00:24:36.583Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb42da501decb737467c4d"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Telefone Tim pre",
+    "valor": 20,
+    "dataVencimento": new Date("2026-03-09T00:00:00.000Z"),
+    "categoria": "Telefone",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:27:06.395Z"),
+    "updatedAt": new Date("2026-03-19T00:38:59.088Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb42f3501decb737467c50"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Telefone Vivo Controle",
+    "valor": 59,
+    "dataVencimento": new Date("2026-03-05T00:00:00.000Z"),
+    "categoria": "Telefone",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:27:31.611Z"),
+    "updatedAt": new Date("2026-03-19T00:39:06.662Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb435a501decb737467c55"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Telefone Vivo Controle",
+    "valor": 59,
+    "dataVencimento": new Date("2026-03-04T00:00:00.000Z"),
+    "categoria": "Telefone",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:29:14.901Z"),
+    "updatedAt": new Date("2026-03-19T00:39:25.886Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb4380501decb737467c58"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Cartão Credito Nu",
+    "valor": 344.9,
+    "dataVencimento": new Date("2026-03-03T00:00:00.000Z"),
+    "categoria": "Cartão",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:29:52.962Z"),
+    "updatedAt": new Date("2026-03-19T00:35:46.016Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb43c4501decb737467c5b"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Fies",
+    "valor": 372.08,
+    "dataVencimento": new Date("2026-02-10T00:00:00.000Z"),
+    "categoria": "Fies",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:31:00.259Z"),
+    "updatedAt": new Date("2026-03-19T00:31:00.259Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb43ce501decb737467c5e"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Fies",
+    "valor": 372.08,
+    "dataVencimento": new Date("2026-03-10T00:00:00.000Z"),
+    "categoria": "Fies",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:31:10.763Z"),
+    "updatedAt": new Date("2026-03-19T00:31:10.763Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb43ed501decb737467c61"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Giga Internet",
+    "valor": 122.42,
+    "dataVencimento": new Date("2026-02-13T00:00:00.000Z"),
+    "categoria": "Internet",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:31:41.360Z"),
+    "updatedAt": new Date("2026-03-19T00:31:41.360Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb4411501decb737467c64"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "JET patinet",
+    "valor": 25,
+    "dataVencimento": new Date("2026-02-18T00:00:00.000Z"),
+    "categoria": "Lazer",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:32:17.371Z"),
+    "updatedAt": new Date("2026-03-19T00:32:17.371Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb442b501decb737467c67"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Vivo Controle",
+    "valor": 59,
+    "dataVencimento": new Date("2026-02-18T00:00:00.000Z"),
+    "categoria": "Telefone",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:32:43.420Z"),
+    "updatedAt": new Date("2026-03-19T00:39:12.751Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb4445501decb737467c6a"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Cesan",
+    "valor": 193.18,
+    "dataVencimento": new Date("2026-02-18T00:00:00.000Z"),
+    "categoria": "Cesan",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:33:09.364Z"),
+    "updatedAt": new Date("2026-03-19T00:33:09.364Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb447f501decb737467c6d"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Cartão Credito Nu",
+    "valor": 297.87,
+    "dataVencimento": new Date("2026-02-19T00:00:00.000Z"),
+    "categoria": "Cartão",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:34:07.763Z"),
+    "updatedAt": new Date("2026-03-19T00:35:40.577Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb4489501decb737467c70"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Cartão Credito Nu",
+    "valor": 223.01,
+    "dataVencimento": new Date("2026-02-19T00:00:00.000Z"),
+    "categoria": "Cartão",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:34:17.421Z"),
+    "updatedAt": new Date("2026-03-19T00:35:34.834Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69bb44bc501decb737467c73"),
+    "userId": ObjectId("69b7562729955a7a81143409"),
+    "descricao": "Fies",
+    "valor": 272.09,
+    "dataVencimento": new Date("2026-01-12T00:00:00.000Z"),
+    "categoria": "Fies",
+    "tipoMovimentacao": "Fixo",
+    "createdAt": new Date("2026-03-19T00:35:08.217Z"),
+    "updatedAt": new Date("2026-03-19T00:35:20.117Z"),
+    "__v": 0
   }
 ]);
 
@@ -410,6 +605,58 @@ db.messages.insertMany([
     "createdAt": new Date("2026-03-17T00:19:23.254Z"),
     "updatedAt": new Date("2026-03-17T00:22:48.635Z"),
     "__v": 0
+  },
+  {
+    "_id": ObjectId("69ba8e07011c459499d6f08b"),
+    "senderId": ObjectId("69b7562729955a7a81143409"),
+    "receiverId": ObjectId("69b89cabd1af3558cc3f7703"),
+    "text": "Oi",
+    "status": "sent",
+    "isRead": false,
+    "isEdited": false,
+    "isDeleted": false,
+    "createdAt": new Date("2026-03-18T11:35:36.043Z"),
+    "updatedAt": new Date("2026-03-18T11:35:36.043Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69ba8e0e011c459499d6f08d"),
+    "senderId": ObjectId("69b7562729955a7a81143409"),
+    "receiverId": ObjectId("69b89cabd1af3558cc3f7703"),
+    "text": "Como vai",
+    "status": "sent",
+    "isRead": false,
+    "isEdited": false,
+    "isDeleted": true,
+    "createdAt": new Date("2026-03-18T11:35:42.064Z"),
+    "updatedAt": new Date("2026-03-18T11:35:49.789Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69baf4fde1ad9cab447ba268"),
+    "senderId": ObjectId("69b7653cdb63a6823601fb3c"),
+    "receiverId": ObjectId("69b7562729955a7a81143409"),
+    "text": "oi",
+    "status": "read",
+    "isRead": true,
+    "isEdited": false,
+    "isDeleted": true,
+    "createdAt": new Date("2026-03-18T18:54:53.830Z"),
+    "updatedAt": new Date("2026-03-18T18:55:13.070Z"),
+    "__v": 0
+  },
+  {
+    "_id": ObjectId("69baf509e1ad9cab447ba27e"),
+    "senderId": ObjectId("69b7562729955a7a81143409"),
+    "receiverId": ObjectId("69b7653cdb63a6823601fb3c"),
+    "text": "oi",
+    "status": "read",
+    "isRead": true,
+    "isEdited": false,
+    "isDeleted": true,
+    "createdAt": new Date("2026-03-18T18:55:05.485Z"),
+    "updatedAt": new Date("2026-03-18T18:55:20.098Z"),
+    "__v": 0
   }
 ]);
 
@@ -423,6 +670,76 @@ db.configs.insertMany([
     "createdAt": new Date("2026-03-17T00:41:29.033Z"),
     "updatedAt": new Date("2026-03-17T00:42:24.644Z"),
     "__v": 0
+  },
+  {
+    "_id": ObjectId("69bafb9fe1ad9cab447ba45b"),
+    "key": "block_google_registration",
+    "value": false,
+    "isPublic": false,
+    "description": "Bloqueia o cadastro de NOVOS usuários através do login do Google.",
+    "__v": 0,
+    "createdAt": new Date("2026-03-18T19:23:11.840Z"),
+    "updatedAt": new Date("2026-03-18T21:23:16.972Z")
+  },
+  {
+    "_id": ObjectId("69bafb9fe1ad9cab447ba45c"),
+    "key": "google_registration_blocked_message",
+    "value": "O cadastro de novos usuários está temporariamente bloqueado pelo administrador.",
+    "isPublic": false,
+    "description": "Mensagem exibida quando um novo usuário tenta se cadastrar pelo Google e o bloqueio está ativo.",
+    "__v": 0,
+    "createdAt": new Date("2026-03-18T19:23:11.841Z"),
+    "updatedAt": new Date("2026-03-18T19:23:11.841Z")
+  },
+  {
+    "_id": ObjectId("69bafb9fe1ad9cab447ba45d"),
+    "key": "smtp_host",
+    "value": "smtp.gmail.com",
+    "isPublic": false,
+    "description": "Servidor SMTP para envio de e-mails.",
+    "__v": 0,
+    "createdAt": new Date("2026-03-18T19:23:11.841Z"),
+    "updatedAt": new Date("2026-03-18T19:26:05.054Z")
+  },
+  {
+    "_id": ObjectId("69bafb9fe1ad9cab447ba45e"),
+    "key": "smtp_port",
+    "value": "587",
+    "isPublic": false,
+    "description": "Porta do servidor SMTP (ex: 587, 465).",
+    "__v": 0,
+    "createdAt": new Date("2026-03-18T19:23:11.842Z"),
+    "updatedAt": new Date("2026-03-18T19:59:10.325Z")
+  },
+  {
+    "_id": ObjectId("69bafb9fe1ad9cab447ba45f"),
+    "key": "smtp_user",
+    "value": "diogodsdf@gmail.com",
+    "isPublic": false,
+    "description": "Usuário de autenticação do SMTP.",
+    "__v": 0,
+    "createdAt": new Date("2026-03-18T19:23:11.842Z"),
+    "updatedAt": new Date("2026-03-18T19:58:30.459Z")
+  },
+  {
+    "_id": ObjectId("69bafb9fe1ad9cab447ba460"),
+    "key": "smtp_password",
+    "value": "pswu djti rioa rpyp",
+    "isPublic": false,
+    "description": "Senha de autenticação do SMTP.",
+    "__v": 0,
+    "createdAt": new Date("2026-03-18T19:23:11.842Z"),
+    "updatedAt": new Date("2026-03-18T19:25:53.854Z")
+  },
+  {
+    "_id": ObjectId("69bafb9fe1ad9cab447ba461"),
+    "key": "smtp_from_email",
+    "value": "contato@finance.mfacil.com.br",
+    "isPublic": false,
+    "description": "Endereço de e-mail do remetente enviado aos clientes.",
+    "__v": 0,
+    "createdAt": new Date("2026-03-18T19:23:11.842Z"),
+    "updatedAt": new Date("2026-03-18T19:58:44.267Z")
   }
 ]);
 

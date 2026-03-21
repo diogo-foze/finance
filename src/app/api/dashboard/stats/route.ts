@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-import { getServerSession } from "next-auth";
-import { authOptions } from "@/lib/auth";
+import { getAuthSession, unauthorizedResponse } from "@/lib/auth-helper";
 import connectToDatabase from "@/lib/mongodb";
 import Receita from "@/models/Receita";
 import Despesa from "@/models/Despesa";
@@ -9,12 +8,12 @@ import mongoose from "mongoose";
 import { startOfMonth, subMonths, format, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 
-export async function GET() {
+export async function GET(request: Request) {
   try {
-    const session = await getServerSession(authOptions);
+    const session = await getAuthSession(request);
 
     if (!session || !session.user) {
-      return NextResponse.json({ error: "Não autorizado" }, { status: 401 });
+      return unauthorizedResponse();
     }
 
     await connectToDatabase();

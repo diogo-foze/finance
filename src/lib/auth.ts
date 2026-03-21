@@ -21,7 +21,7 @@ export const authOptions: NextAuthOptions = {
       async authorize(credentials) {
         try {
           console.log("Tentativa de login para:", credentials?.email);
-          
+
           if (!credentials?.email || !credentials?.password) {
             console.log("Credenciais ausentes");
             return null;
@@ -73,17 +73,35 @@ export const authOptions: NextAuthOptions = {
               return `/login?error=GoogleRegistrationBlocked&message=${encodeURIComponent(message)}`;
             }
 
+            let generatedUsername = user.email.split("@")[0].toLowerCase().replace(/[^a-z0-9]/g, "");
+            const usernameExists = await User.findOne({ username: generatedUsername });
+
+            if (usernameExists) {
+              const randomDigits = Math.floor(100000 + Math.random() * 900000);
+              generatedUsername = `${generatedUsername}-${randomDigits}`;
+            }
+
             await User.create({
               name: user.name,
               email: user.email,
+              username: generatedUsername,
               image: user.image,
               provider: "google",
               role: "user",
+              isEmailVerified: true,
             });
-          } else if (!existingUser.image && user.image) {
-            // Synchronize Google image if the user doesn't have a profile picture yet
-            existingUser.image = user.image;
-            await existingUser.save();
+          } else {
+            // Force verify if signing in with Google
+            if (!existingUser.isEmailVerified) {
+              existingUser.isEmailVerified = true;
+            }
+            // Synchronize Google image if needed
+            if (!existingUser.image && user.image) {
+              existingUser.image = user.image;
+            }
+            if (existingUser.isModified()) {
+              await existingUser.save();
+            }
           }
         }
         return true;
@@ -98,6 +116,8 @@ export const authOptions: NextAuthOptions = {
         session.user.role = token.role;
         if (token.picture) session.user.image = token.picture;
         if (token.name) session.user.name = token.name;
+        if (token.username) session.user.username = token.username;
+        session.user.isEmailVerified = token.isEmailVerified;
       }
       return session;
     },
@@ -106,6 +126,8 @@ export const authOptions: NextAuthOptions = {
       if (trigger === "update" && session) {
         if (session.image) token.picture = session.image;
         if (session.name) token.name = session.name;
+        if (session.username) token.username = session.username;
+        if (session.isEmailVerified !== undefined) token.isEmailVerified = session.isEmailVerified;
       }
 
       if (user) {
@@ -116,6 +138,8 @@ export const authOptions: NextAuthOptions = {
           token.role = dbUser.role || "user";
           token.picture = dbUser.image || null;
           token.name = dbUser.name;
+          token.username = dbUser.username;
+          token.isEmailVerified = dbUser.isEmailVerified;
         } else {
           // Fallback if somehow missing
           token.id = user.id;
