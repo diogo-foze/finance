@@ -28,6 +28,17 @@ const ReceitaSchema = new Schema(
       enum: ["Fixo", "Variável"],
       required: true,
     },
+    status: {
+      type: String,
+      enum: ["Planejado", "Consolidado"],
+      default: "Planejado",
+    },
+    valorConsolidado: {
+      type: Number,
+    },
+    dataConsolidacao: {
+      type: Date,
+    },
   },
   { timestamps: true }
 );

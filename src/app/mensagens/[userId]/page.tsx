@@ -6,6 +6,7 @@ import { useSocket } from "@/components/providers/SocketProvider";
 import { Send, ArrowLeft, User as UserIcon, Check, CheckCheck, Trash2 } from "lucide-react";
 import Link from "next/link";
 import { AppLayout } from "@/components/layout/AppLayout";
+import { FormattedText } from "@/components/ui/formatted-text";
 
 export default function ChatPage({ params }: { params: Promise<{ userId: string }> }) {
   const { userId } = use(params);
@@ -306,7 +307,7 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
                       {msg.isDeleted ? (
                         <p className="text-sm italic opacity-70">Mensagem apagada</p>
                       ) : (
-                        <p className="text-sm leading-relaxed whitespace-pre-wrap">{msg.text}</p>
+                        <FormattedText text={msg.text} className="text-sm leading-relaxed" />
                       )}
                       
                       <div className="flex items-center justify-end gap-2 text-[10px] mt-1 opacity-70 min-w-16">

@@ -1,7 +1,8 @@
 "use client";
 
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
-import { DollarSign, ArrowUpCircle, ArrowDownCircle, Users, Receipt, Landmark, TrendingUp, EyeOff } from "lucide-react";
+import { DollarSign, ArrowUpCircle, ArrowDownCircle, Users, Receipt, Landmark, TrendingUp, EyeOff, AlertCircle, CheckCircle2 } from "lucide-react";
+import { Progress } from "@/components/ui/progress";
 import { useEffect, useState } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, Legend } from "recharts";
@@ -19,6 +20,12 @@ interface DashboardData {
     saldo: number;
     receitas: number;
     despesas: number;
+    receitasConsolidado: number;
+    despesasConsolidado: number;
+    quebraCaixa: number;
+    imprevistos: number;
+    atrasosReceita: number;
+    atrasosDespesa: number;
   };
   chartData: any[];
   recentTransactions: any[];
@@ -114,9 +121,32 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-zinc-900 group-hover:text-emerald-600 transition-colors">
-              {isVisible ? formatCurrency(data.summary.receitas) : <EyeOff className="h-6 w-6 inline-block text-zinc-400" />}
+              {isVisible ? formatCurrency(data.summary.receitasConsolidado) : <EyeOff className="h-6 w-6 inline-block text-zinc-400" />}
             </div>
-            <p className="text-xs text-zinc-400 mt-1 group-hover:text-zinc-600 transition-colors">Total recebido em {format(new Date(), "MMMM", { locale: ptBR })}</p>
+            <p className="text-xs text-zinc-400 mt-1 group-hover:text-zinc-600 transition-colors">Previsto: {formatCurrency(data.summary.receitas)}</p>
+            
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wider">
+                <span className="text-emerald-600">Consolidado</span>
+                <span className="text-zinc-400">{Math.round((data.summary.receitasConsolidado / data.summary.receitas) * 100 || 0)}%</span>
+              </div>
+              <Progress value={(data.summary.receitasConsolidado / data.summary.receitas) * 100} className="h-1.5 bg-emerald-100 [&>div]:bg-emerald-500" />
+              
+              <div className="flex flex-col gap-1.5 pt-1">
+                {data.summary.atrasosReceita > 0 && (
+                  <div className="flex items-center gap-1.5 text-amber-600 animate-pulse">
+                    <AlertCircle className="h-3 w-3" />
+                    <span className="text-[11px] font-medium">Atrasos: {formatCurrency(data.summary.atrasosReceita)}</span>
+                  </div>
+                )}
+                {data.summary.quebraCaixa > 0 && (
+                  <div className="flex items-center gap-1.5 text-zinc-500">
+                    <CheckCircle2 className="h-3 w-3" />
+                    <span className="text-[11px] font-medium">Quebra de Caixa: {formatCurrency(data.summary.quebraCaixa)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
 
@@ -127,9 +157,32 @@ export default function DashboardPage() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-destructive group-hover:brightness-110 transition-all">
-              {isVisible ? formatCurrency(data.summary.despesas) : <EyeOff className="h-6 w-6 inline-block text-zinc-400" />}
+              {isVisible ? formatCurrency(data.summary.despesasConsolidado) : <EyeOff className="h-6 w-6 inline-block text-zinc-400" />}
             </div>
-            <p className="text-xs text-zinc-400 mt-1 group-hover:text-zinc-600 transition-colors">Total planejado para este mês</p>
+            <p className="text-xs text-zinc-400 mt-1 group-hover:text-zinc-600 transition-colors">Previsto: {formatCurrency(data.summary.despesas)}</p>
+
+            <div className="mt-4 space-y-2">
+              <div className="flex justify-between text-[10px] font-semibold uppercase tracking-wider">
+                <span className="text-destructive">Consolidado</span>
+                <span className="text-zinc-400">{Math.round((data.summary.despesasConsolidado / data.summary.despesas) * 100 || 0)}%</span>
+              </div>
+              <Progress value={(data.summary.despesasConsolidado / data.summary.despesas) * 100} className="h-1.5 bg-red-100 [&>div]:bg-destructive" />
+              
+              <div className="flex flex-col gap-1.5 pt-1">
+                {data.summary.atrasosDespesa > 0 && (
+                  <div className="flex items-center gap-1.5 text-amber-600 animate-pulse">
+                    <AlertCircle className="h-3 w-3" />
+                    <span className="text-[11px] font-medium">Atrasos: {formatCurrency(data.summary.atrasosDespesa)}</span>
+                  </div>
+                )}
+                {data.summary.imprevistos > 0 && (
+                  <div className="flex items-center gap-1.5 text-zinc-500">
+                    <CheckCircle2 className="h-3 w-3" />
+                    <span className="text-[11px] font-medium">Imprevistos: {formatCurrency(data.summary.imprevistos)}</span>
+                  </div>
+                )}
+              </div>
+            </div>
           </CardContent>
         </Card>
       </div>

@@ -7,6 +7,7 @@ import Link from "next/link";
 import { User as UserIcon, MessageSquare, Plus, X, Search } from "lucide-react";
 import { AppLayout } from "@/components/layout/AppLayout";
 import { Button } from "@/components/ui/button";
+import { FormattedText } from "@/components/ui/formatted-text";
 
 interface Chat {
   otherUserId: string;
@@ -149,7 +150,9 @@ export default function MessagesManagement() {
                         {new Date(chat.updatedAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                       </span>
                     </div>
-                    <div className="text-sm text-muted-foreground truncate">{chat.lastMessage}</div>
+                    <div className="text-sm text-muted-foreground truncate">
+                      <FormattedText text={chat.lastMessage} isPreview />
+                    </div>
                   </div>
                 </Link>
               );

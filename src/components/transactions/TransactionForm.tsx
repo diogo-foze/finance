@@ -33,7 +33,10 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
     valor: "",
     data: new Date().toISOString().split('T')[0],
     categoria: "",
-    tipoMovimentacao: "Fixo" as "Fixo" | "Variável"
+    tipoMovimentacao: "Fixo" as "Fixo" | "Variável",
+    status: "Planejado" as "Planejado" | "Consolidado",
+    valorConsolidado: "",
+    dataConsolidacao: new Date().toISOString().split('T')[0]
   });
 
   const formatInitialValue = (val: number) => {
@@ -41,13 +44,16 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
   };
 
   const syncFormWithTransaction = (t: Transaction | null | undefined) => {
-     if (t) {
+    if (t) {
       setFormData({
         descricao: t.descricao,
         valor: formatInitialValue(t.valor),
         data: new Date(t.data).toISOString().split('T')[0],
         categoria: t.categoria,
-        tipoMovimentacao: t.tipoMovimentacao
+        tipoMovimentacao: t.tipoMovimentacao,
+        status: t.status || "Planejado",
+        valorConsolidado: t.valorConsolidado ? formatInitialValue(t.valorConsolidado) : "",
+        dataConsolidacao: t.dataConsolidacao ? new Date(t.dataConsolidacao).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
       });
     } else {
       setFormData({
@@ -55,7 +61,10 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
         valor: "",
         data: new Date().toISOString().split('T')[0],
         categoria: "",
-        tipoMovimentacao: "Fixo"
+        tipoMovimentacao: "Fixo",
+        status: "Planejado",
+        valorConsolidado: "",
+        dataConsolidacao: new Date().toISOString().split('T')[0]
       });
     }
   };
@@ -72,7 +81,7 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
     try {
       const endpoint = type === "Receita" ? "/api/receitas" : "/api/despesas";
       const isEdit = !!transaction?._id;
-      
+
       const response = await fetch(endpoint, {
         method: isEdit ? "PUT" : "POST",
         headers: {
@@ -87,17 +96,20 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
 
       toast.success(`${type} ${isEdit ? 'atualizada' : 'adicionada'} com sucesso!`);
       setOpen(false);
-      
+
       if (!isEdit) {
         setFormData({
           descricao: "",
           valor: "",
           data: new Date().toISOString().split('T')[0],
           categoria: "",
-          tipoMovimentacao: "Fixo"
+          tipoMovimentacao: "Fixo",
+          status: "Planejado",
+          valorConsolidado: "",
+          dataConsolidacao: new Date().toISOString().split('T')[0]
         });
       }
-      
+
       if (onSuccess) {
         onSuccess();
       } else {
@@ -173,17 +185,17 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
         <form onSubmit={handleSubmit} className="space-y-4 py-4">
           <div className="space-y-2">
             <label className="text-sm font-medium">Descrição</label>
-            <Input 
-              required 
+            <Input
+              required
               value={formData.descricao}
-              onChange={(e) => setFormData({...formData, descricao: e.target.value})}
+              onChange={(e) => setFormData({ ...formData, descricao: e.target.value })}
               placeholder="Ex: Salário, Aluguel..."
             />
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Valor (R$)</label>
-            <Input 
-              required 
+            <Input
+              required
               value={formData.valor}
               onChange={handleValueChange}
               placeholder="0,00"
@@ -192,28 +204,28 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
               <label className="text-sm font-medium">Data</label>
-              <Input 
-                type="date" 
-                required 
+              <Input
+                type="date"
+                required
                 value={formData.data}
-                onChange={(e) => setFormData({...formData, data: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, data: e.target.value })}
               />
             </div>
             <div className="space-y-2">
               <label className="text-sm font-medium">Categoria</label>
-              <Input 
-                required 
+              <Input
+                required
                 value={formData.categoria}
-                onChange={(e) => setFormData({...formData, categoria: e.target.value})}
+                onChange={(e) => setFormData({ ...formData, categoria: e.target.value })}
                 placeholder="Ex: Lazer"
               />
             </div>
           </div>
           <div className="space-y-2">
             <label className="text-sm font-medium">Tipo de Movimentação</label>
-            <Select 
-              value={formData.tipoMovimentacao} 
-              onValueChange={(val) => setFormData({...formData, tipoMovimentacao: val as "Fixo" | "Variável"})}
+            <Select
+              value={formData.tipoMovimentacao}
+              onValueChange={(val) => setFormData({ ...formData, tipoMovimentacao: val as "Fixo" | "Variável" })}
             >
               <SelectTrigger>
                 <SelectValue placeholder="Selecione..." />
@@ -224,7 +236,54 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
               </SelectContent>
             </Select>
           </div>
-          <div className="pt-2 flex justify-end gap-2">
+          <div className="space-y-4 pt-2 border-t mt-4">
+            <div className="space-y-2">
+              <label className="text-sm font-medium">Status</label>
+              <Select
+                value={formData.status}
+                onValueChange={(val) => setFormData({ ...formData, status: val as "Planejado" | "Consolidado" })}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="Planejado">Planejado</SelectItem>
+                  <SelectItem value="Consolidado">Consolidado</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            {formData.status === "Consolidado" && (
+              <div className="grid grid-cols-2 gap-4 animate-in fade-in slide-in-from-top-2 duration-200">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Valor Consolidado (R$)</label>
+                  <Input
+                    value={formData.valorConsolidado}
+                    onChange={(e) => {
+                      let rawValue = e.target.value.replace(/\D/g, "");
+                      if (!rawValue) {
+                        setFormData({ ...formData, valorConsolidado: "" });
+                        return;
+                      }
+                      const formatted = (Number(rawValue) / 100).toLocaleString("pt-BR", {
+                        minimumFractionDigits: 2,
+                      });
+                      setFormData({ ...formData, valorConsolidado: formatted });
+                    }}
+                    placeholder="0,00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">Data de Consolidação</label>
+                  <Input
+                    type="date"
+                    value={formData.dataConsolidacao}
+                    onChange={(e) => setFormData({ ...formData, dataConsolidacao: e.target.value })}
+                  />
+                </div>
+              </div>
+            )}
+          </div>
+          <div className="pt-4 flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => setOpen(false)}>Cancelar</Button>
             <Button type="submit" disabled={loading}>{loading ? "Salvando..." : (transaction ? "Atualizar" : "Salvar")}</Button>
           </div>

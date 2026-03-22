@@ -42,7 +42,8 @@ export async function POST(request: Request) {
       return unauthorizedResponse();
     }
 
-    const { descricao, valor, data, categoria, tipoMovimentacao } = await request.json();
+    const body = await request.json();
+    const { descricao, valor, data, categoria, tipoMovimentacao, status, valorConsolidado, dataConsolidacao } = body;
 
     if (!descricao || !valor || !data || !categoria || !tipoMovimentacao) {
       return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
@@ -56,6 +57,11 @@ export async function POST(request: Request) {
       dataRecebimento: new Date(data),
       categoria,
       tipoMovimentacao,
+      status: status || "Planejado",
+      valorConsolidado: (valorConsolidado !== undefined && valorConsolidado !== null && valorConsolidado !== "") 
+        ? Number(valorConsolidado.toString().replace(/\./g, "").replace(",", ".")) 
+        : undefined,
+      dataConsolidacao: dataConsolidacao ? new Date(dataConsolidacao) : undefined,
     });
 
     if ((global as any).io) {
@@ -77,27 +83,83 @@ export async function PUT(request: Request) {
       return unauthorizedResponse();
     }
 
-    const { id, descricao, valor, data, categoria, tipoMovimentacao } = await request.json();
+    const body = await request.json();
+    const { id, descricao, valor, data, categoria, tipoMovimentacao, status, valorConsolidado, dataConsolidacao } = body;
 
     if (!id || !descricao || !valor || !data || !categoria || !tipoMovimentacao) {
       return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
     }
 
     await connectToDatabase();
+    
+    // Fetch original to check for partial consolidation
+    const originalReceita = await Receita.findOne({ _id: id, userId: session.user.id });
+    if (!originalReceita) {
+      return NextResponse.json({ error: "Receita não encontrada" }, { status: 404 });
+    }
+
+    const numericValor = typeof valor === 'string' ? Number(valor.replace(/\./g, "").replace(",", ".")) : valor;
+    const numericValorConsolidado = (valorConsolidado !== undefined && valorConsolidado !== null && valorConsolidado !== "") 
+      ? Number(valorConsolidado.toString().replace(/\./g, "").replace(",", ".")) 
+      : undefined;
+
+    // Use the consolidated value as the new 'valor' (planned) if we're splitting,
+    // to avoid double-counting with the remainder transaction.
+    const finalValor = (status === "Consolidado" && originalReceita.status === "Planejado" && numericValorConsolidado && numericValorConsolidado < originalReceita.valor)
+      ? numericValorConsolidado
+      : numericValor;
+
     const updatedReceita = await Receita.findOneAndUpdate(
       { _id: id, userId: session.user.id },
       {
         descricao,
-        valor: typeof valor === 'string' ? Number(valor.replace(/\./g, "").replace(",", ".")) : valor,
+        valor: finalValor,
         dataRecebimento: new Date(data),
         categoria,
         tipoMovimentacao,
+        status,
+        valorConsolidado: numericValorConsolidado,
+        dataConsolidacao: dataConsolidacao ? new Date(dataConsolidacao) : undefined,
       },
       { new: true }
     );
 
-    if (!updatedReceita) {
-      return NextResponse.json({ error: "Receita não encontrada ou não autorizada" }, { status: 404 });
+    // Partial Consolidation Logic
+    // Only trigger if we are moving from Planejado to Consolidado and there's a shortfall
+    if (status === "Consolidado" && originalReceita.status === "Planejado" && numericValorConsolidado && numericValorConsolidado < originalReceita.valor) {
+      const { parcelarRestante, numeroParcelas } = body;
+      const diff = originalReceita.valor - numericValorConsolidado;
+
+      if (parcelarRestante && numeroParcelas > 0) {
+        const valorParcela = diff / numeroParcelas;
+        const baseDate = new Date(originalReceita.dataRecebimento);
+        
+        for (let i = 1; i <= numeroParcelas; i++) {
+          const parcelDate = new Date(baseDate);
+          parcelDate.setMonth(parcelDate.getMonth() + i);
+          
+          await Receita.create({
+            userId: session.user.id,
+            descricao: `${descricao} (Parc ${i}/${numeroParcelas})`,
+            valor: valorParcela,
+            dataRecebimento: parcelDate,
+            categoria,
+            tipoMovimentacao,
+            status: "Planejado"
+          });
+        }
+      } else {
+        // Just leave the remainder open
+        await Receita.create({
+          userId: session.user.id,
+          descricao: `${descricao} (Restante)`,
+          valor: diff,
+          dataRecebimento: new Date(originalReceita.dataRecebimento),
+          categoria,
+          tipoMovimentacao,
+          status: "Planejado"
+        });
+      }
     }
 
     if ((global as any).io) {

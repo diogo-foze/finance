@@ -20,7 +20,8 @@ import {
   SelectValue 
 } from "@/components/ui/select"
 import { useVisibility } from "@/components/providers/VisibilityProvider"
-import { EyeOff, Search, ChevronLeft, ChevronRight, Calendar } from "lucide-react"
+import { EyeOff, Search, ChevronLeft, ChevronRight, Calendar, CheckCircle2, AlertCircle, DollarSign } from "lucide-react"
+import { cn } from "@/lib/utils";
 
 export interface Transaction {
   _id: string;
@@ -29,15 +30,19 @@ export interface Transaction {
   data: string;
   categoria: string;
   tipoMovimentacao: "Fixo" | "Variável";
+  status: "Planejado" | "Consolidado";
+  valorConsolidado?: number;
+  dataConsolidacao?: string;
 }
 
 interface TransactionTableProps {
   transactions: Transaction[];
   type: "Receita" | "Despesa";
   onRowClick?: (transaction: Transaction) => void;
+  onConsolidate?: (transaction: Transaction) => void;
 }
 
-export function TransactionTable({ transactions, type, onRowClick }: TransactionTableProps) {
+export function TransactionTable({ transactions, type, onRowClick, onConsolidate }: TransactionTableProps) {
   const { isVisible } = useVisibility();
 
   // Estados de Filtro
@@ -194,7 +199,9 @@ export function TransactionTable({ transactions, type, onRowClick }: Transaction
               <TableHead>Categoria</TableHead>
               <TableHead>Movimentação</TableHead>
               <TableHead>Data</TableHead>
+              <TableHead>Status</TableHead>
               <TableHead className="text-right">Valor</TableHead>
+              <TableHead className="w-[50px]"></TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -220,8 +227,44 @@ export function TransactionTable({ transactions, type, onRowClick }: Transaction
                     </Badge>
                   </TableCell>
                   <TableCell>{formatDate(transaction.data)}</TableCell>
+                  <TableCell>
+                    <Badge 
+                      variant="outline" 
+                      className={cn(
+                        "gap-1",
+                        transaction.status === "Consolidado" 
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200" 
+                          : "bg-amber-50 text-amber-700 border-amber-200"
+                      )}
+                    >
+                      {transaction.status === "Consolidado" ? <DollarSign className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                      {transaction.status}
+                    </Badge>
+                  </TableCell>
                   <TableCell className={`text-right font-medium ${type === "Receita" ? "text-emerald-500" : "text-destructive"}`}>
-                    {isVisible ? `${type === "Receita" ? "+" : "-"} ${formatCurrency(transaction.valor)}` : <EyeOff className="h-4 w-4 inline-block ml-auto text-zinc-400" />}
+                    <div className="flex flex-col items-end">
+                      <span>{isVisible ? `${type === "Receita" ? "+" : "-"} ${formatCurrency(transaction.valor)}` : <EyeOff className="h-4 w-4 inline-block text-zinc-400" />}</span>
+                      {transaction.status === "Consolidado" && transaction.valorConsolidado !== undefined && (
+                        <span className="text-[10px] text-muted-foreground italic">
+                          Consol: {formatCurrency(transaction.valorConsolidado)}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    {transaction.status === "Planejado" && (
+                       <Button
+                        variant="ghost"
+                        size="icon"
+                        className="h-8 w-8 text-primary hover:text-primary hover:bg-primary/10"
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (onConsolidate) onConsolidate(transaction);
+                        }}
+                      >
+                        <CheckCircle2 className="w-4 h-4" />
+                      </Button>
+                    )}
                   </TableCell>
                 </TableRow>
               ))

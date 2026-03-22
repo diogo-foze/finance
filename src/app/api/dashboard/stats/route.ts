@@ -27,21 +27,86 @@ export async function GET(request: Request) {
 
     const mongooseUserId = new mongoose.Types.ObjectId(userId);
 
-    // 1. Summary Totals (Same logic as before but optimized)
     const now = new Date();
     const currentMonthStart = startOfMonth(now);
+    const currentMonthEnd = endOfMonth(now);
 
+    // 1. Summary Totals (All time consolidated)
     const summaryResults = await Promise.all([
-      Receita.aggregate([{ $match: { userId: mongooseUserId } }, { $group: { _id: null, total: { $sum: "$valor" } } }]),
-      Despesa.aggregate([{ $match: { userId: mongooseUserId } }, { $group: { _id: null, total: { $sum: "$valor" } } }]),
-      Receita.aggregate([{ $match: { userId: mongooseUserId, dataRecebimento: { $gte: currentMonthStart } } }, { $group: { _id: null, total: { $sum: "$valor" } } }]),
-      Despesa.aggregate([{ $match: { userId: mongooseUserId, dataVencimento: { $gte: currentMonthStart } } }, { $group: { _id: null, total: { $sum: "$valor" } } }])
+      Receita.aggregate([{ $match: { userId: mongooseUserId, status: "Consolidado" } }, { $group: { _id: null, total: { $sum: { $ifNull: ["$valorConsolidado", "$valor"] } } } }]),
+      Despesa.aggregate([{ $match: { userId: mongooseUserId, status: "Consolidado" } }, { $group: { _id: null, total: { $sum: { $ifNull: ["$valorConsolidado", "$valor"] } } } }]),
+      // Current Month Stats for Progress Bar
+      Receita.aggregate([
+        { $match: { userId: mongooseUserId, dataRecebimento: { $gte: currentMonthStart, $lte: currentMonthEnd } } },
+        { 
+          $group: { 
+            _id: null, 
+            totalPlanejado: { $sum: "$valor" },
+            totalConsolidado: { $sum: { 
+              $cond: [
+                { $eq: ["$status", "Consolidado"] },
+                { $ifNull: ["$valorConsolidado", "$valor"] },
+                0
+              ]
+            } },
+            quebraCaixa: { 
+              $sum: { 
+                $cond: [
+                  { $eq: ["$status", "Consolidado"] },
+                  { $max: [0, { $subtract: ["$valor", { $ifNull: ["$valorConsolidado", "$valor"] }] }] },
+                  0
+                ]
+              }
+            }
+          } 
+        }
+      ]),
+      Despesa.aggregate([
+        { $match: { userId: mongooseUserId, dataVencimento: { $gte: currentMonthStart, $lte: currentMonthEnd } } },
+        { 
+          $group: { 
+            _id: null, 
+            totalPlanejado: { $sum: "$valor" },
+            totalConsolidado: { $sum: { 
+              $cond: [
+                { $eq: ["$status", "Consolidado"] },
+                { $ifNull: ["$valorConsolidado", "$valor"] },
+                0
+              ]
+            } },
+            imprevistos: { 
+              $sum: { 
+                $cond: [
+                  { $eq: ["$status", "Consolidado"] },
+                  { $max: [0, { $subtract: [{ $ifNull: ["$valorConsolidado", "$valor"] }, "$valor"] }] },
+                  0
+                ]
+              }
+            }
+          } 
+        }
+      ]),
+      // Delays (Past date AND not consolidated)
+      Receita.aggregate([
+        { $match: { userId: mongooseUserId, dataRecebimento: { $lt: now }, status: "Planejado" } },
+        { $group: { _id: null, total: { $sum: "$valor" } } }
+      ]),
+      Despesa.aggregate([
+        { $match: { userId: mongooseUserId, dataVencimento: { $lt: now }, status: "Planejado" } },
+        { $group: { _id: null, total: { $sum: "$valor" } } }
+      ])
     ]);
 
     const totalReceitas = summaryResults[0][0]?.total || 0;
     const totalDespesas = summaryResults[1][0]?.total || 0;
+    
+    const receitaStats = summaryResults[2][0] || { totalPlanejado: 0, totalConsolidado: 0, quebraCaixa: 0 };
+    const despesaStats = summaryResults[3][0] || { totalPlanejado: 0, totalConsolidado: 0, imprevistos: 0 };
+    
+    const atrasosReceita = summaryResults[4][0]?.total || 0;
+    const atrasosDespesa = summaryResults[5][0]?.total || 0;
 
-    // 2. Chart Data (Last 6 months)
+    // 2. Chart Data (Last 6 months - ONLY Consolidated)
     const chartData = [];
     for (let i = 5; i >= 0; i--) {
       const monthDate = subMonths(now, i);
@@ -49,8 +114,14 @@ export async function GET(request: Request) {
       const end = endOfMonth(monthDate);
 
       const [rec, des] = await Promise.all([
-        Receita.aggregate([{ $match: { userId: mongooseUserId, dataRecebimento: { $gte: start, $lte: end } } }, { $group: { _id: null, total: { $sum: "$valor" } } }]),
-        Despesa.aggregate([{ $match: { userId: mongooseUserId, dataVencimento: { $gte: start, $lte: end } } }, { $group: { _id: null, total: { $sum: "$valor" } } }])
+        Receita.aggregate([
+          { $match: { userId: mongooseUserId, dataRecebimento: { $gte: start, $lte: end }, status: "Consolidado" } }, 
+          { $group: { _id: null, total: { $sum: { $ifNull: ["$valorConsolidado", "$valor"] } } } }
+        ]),
+        Despesa.aggregate([
+          { $match: { userId: mongooseUserId, dataVencimento: { $gte: start, $lte: end }, status: "Consolidado" } }, 
+          { $group: { _id: null, total: { $sum: { $ifNull: ["$valorConsolidado", "$valor"] } } } }
+        ])
       ]);
 
       chartData.push({
@@ -94,8 +165,14 @@ export async function GET(request: Request) {
     return NextResponse.json({
       summary: {
         saldo: totalReceitas - totalDespesas,
-        receitas: summaryResults[2][0]?.total || 0,
-        despesas: summaryResults[3][0]?.total || 0
+        receitas: receitaStats.totalPlanejado,
+        despesas: despesaStats.totalPlanejado,
+        receitasConsolidado: receitaStats.totalConsolidado,
+        despesasConsolidado: despesaStats.totalConsolidado,
+        quebraCaixa: receitaStats.quebraCaixa,
+        imprevistos: despesaStats.imprevistos,
+        atrasosReceita,
+        atrasosDespesa
       },
       chartData,
       recentTransactions,

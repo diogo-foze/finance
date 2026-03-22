@@ -3,11 +3,13 @@
 import { useState, useEffect } from "react";
 import { TransactionTable, Transaction } from "@/components/transactions/TransactionTable";
 import { TransactionForm } from "@/components/transactions/TransactionForm";
+import { ConsolidationModal } from "@/components/transactions/ConsolidationModal";
 
 export default function ReceitasPage() {
   const [receitas, setReceitas] = useState<Transaction[]>([]);
   const [loading, setLoading] = useState(true);
   const [editingTransaction, setEditingTransaction] = useState<Transaction | null>(null);
+  const [consolidatingTransaction, setConsolidatingTransaction] = useState<Transaction | null>(null);
 
   const fetchReceitas = async () => {
     try {
@@ -21,7 +23,10 @@ export default function ReceitasPage() {
           valor: item.valor,
           data: item.dataRecebimento,
           categoria: item.categoria,
-          tipoMovimentacao: item.tipoMovimentacao
+          tipoMovimentacao: item.tipoMovimentacao,
+          status: item.status,
+          valorConsolidado: item.valorConsolidado,
+          dataConsolidacao: item.dataConsolidacao
         }));
         setReceitas(transformed);
       }
@@ -63,8 +68,17 @@ export default function ReceitasPage() {
           transactions={receitas} 
           type="Receita" 
           onRowClick={(t) => setEditingTransaction(t)}
+          onConsolidate={(t) => setConsolidatingTransaction(t)}
         />
       )}
+
+      <ConsolidationModal 
+        transaction={consolidatingTransaction}
+        isOpen={!!consolidatingTransaction}
+        onOpenChange={(open) => !open && setConsolidatingTransaction(null)}
+        type="Receita"
+        onSuccess={fetchReceitas}
+      />
     </div>
   );
 }

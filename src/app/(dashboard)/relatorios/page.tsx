@@ -25,6 +25,7 @@ import { Mail, Loader2, TrendingUp, TrendingDown, Wallet, Calendar, Filter, Down
 import { toast } from "sonner";
 import { useVisibility } from "@/components/providers/VisibilityProvider";
 import { useSocket } from "@/components/providers/SocketProvider";
+import { Progress } from "@/components/ui/progress";
 import { format, subMonths, startOfMonth, endOfMonth, startOfYear, endOfYear } from "date-fns";
 import { ptBR } from "date-fns/locale";
 
@@ -42,12 +43,24 @@ export default function RelatoriosPage() {
     barData: any[],
     pieData: any[],
     lineData: any[],
-    summary: { receitas: number, despesas: number, saldo: number }
+    summary: { 
+      receitas: number, 
+      despesas: number, 
+      saldo: number,
+      receitasConsolidado: number,
+      despesasConsolidado: number
+    }
   }>({
     barData: [],
     pieData: [],
     lineData: [],
-    summary: { receitas: 0, despesas: 0, saldo: 0 }
+    summary: { 
+      receitas: 0, 
+      despesas: 0, 
+      saldo: 0,
+      receitasConsolidado: 0,
+      despesasConsolidado: 0
+    }
   });
 
   const { isVisible } = useVisibility();
@@ -89,12 +102,20 @@ export default function RelatoriosPage() {
       const receitas = await resReceitas.json();
       const despesas = await resDespesas.json();
 
-      const totalReceitas = receitas.reduce((acc: number, r: any) => acc + r.valor, 0);
-      const totalDespesas = despesas.reduce((acc: number, d: any) => acc + d.valor, 0);
+      const totalPrevistoReceitas = receitas.reduce((acc: number, r: any) => acc + r.valor, 0);
+      const totalPrevistoDespesas = despesas.reduce((acc: number, d: any) => acc + d.valor, 0);
+      
+      const totalConsolidadoReceitas = receitas.reduce((acc: number, r: any) => 
+        acc + (r.status === "Consolidado" ? (r.valorConsolidado !== undefined && r.valorConsolidado !== null ? r.valorConsolidado : r.valor) : 0), 0);
+      const totalConsolidadoDespesas = despesas.reduce((acc: number, d: any) => 
+        acc + (d.status === "Consolidado" ? (d.valorConsolidado !== undefined && d.valorConsolidado !== null ? d.valorConsolidado : d.valor) : 0), 0);
 
       const monthlyMap: Record<string, { name: string, receitas: number, despesas: number, timestamp: number }> = {};
 
       const processItem = (item: any, type: 'receitas' | 'despesas') => {
+        // Only include consolidated items in the charts/summaries
+        if (item.status !== "Consolidado") return;
+        
         const date = new Date(item.dataRecebimento || item.dataVencimento);
         const key = format(date, "MMM/yy", { locale: ptBR });
         if (!monthlyMap[key]) {
@@ -105,7 +126,7 @@ export default function RelatoriosPage() {
             timestamp: date.getTime()
           };
         }
-        monthlyMap[key][type] += item.valor;
+        monthlyMap[key][type] += (item.valorConsolidado || item.valor);
       };
 
       receitas.forEach((r: any) => processItem(r, 'receitas'));
@@ -115,18 +136,22 @@ export default function RelatoriosPage() {
 
       const categoriesMap: Record<string, number> = {};
       despesas.forEach((d: any) => {
-        categoriesMap[d.categoria] = (categoriesMap[d.categoria] || 0) + d.valor;
+        if (d.status === "Consolidado") {
+          categoriesMap[d.categoria] = (categoriesMap[d.categoria] || 0) + (d.valorConsolidado || d.valor);
+        }
       });
       const pieData = Object.entries(categoriesMap).map(([name, value]) => ({ name, value }));
 
       const dailyMap: Record<string, { date: string, saldo: number, timestamp: number }> = {};
 
       const processDaily = (item: any, multiplier: number) => {
+        if (item.status !== "Consolidado") return;
+        
         const date = format(new Date(item.dataRecebimento || item.dataVencimento), "yyyy-MM-dd");
         if (!dailyMap[date]) {
           dailyMap[date] = { date: format(new Date(date), "dd/MM"), saldo: 0, timestamp: new Date(date).getTime() };
         }
-        dailyMap[date].saldo += (item.valor * multiplier);
+        dailyMap[date].saldo += ((item.valorConsolidado || item.valor) * multiplier);
       };
 
       receitas.forEach((r: any) => processDaily(r, 1));
@@ -144,7 +169,13 @@ export default function RelatoriosPage() {
         barData,
         pieData,
         lineData,
-        summary: { receitas: totalReceitas, despesas: totalDespesas, saldo: totalReceitas - totalDespesas }
+        summary: { 
+          receitas: totalConsolidadoReceitas, 
+          despesas: totalConsolidadoDespesas, 
+          saldo: totalConsolidadoReceitas - totalConsolidadoDespesas,
+          receitasPrevisto: totalPrevistoReceitas,
+          despesasPrevisto: totalPrevistoDespesas
+        }
       });
     } catch (error) {
       console.error("Erro ao carregar relatórios:", error);
@@ -291,7 +322,18 @@ export default function RelatoriosPage() {
           <CardContent>
             <div className="text-xs text-emerald-100 flex items-center gap-1">
               <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
-              Ganhos acumulados no período
+              Ganhos acumulados consolidados
+            </div>
+            <div className="mt-3 space-y-1">
+              <div className="flex justify-between text-[10px] font-bold uppercase">
+                <span>Total Previsto: {formatCurrency(data.summary.receitasPrevisto)}</span>
+                <span>{Math.round((data.summary.receitas / data.summary.receitasPrevisto) * 100 || 0)}%</span>
+              </div>
+              <Progress value={(data.summary.receitas / data.summary.receitasPrevisto) * 100} className="h-1 bg-emerald-400/30 [&>div]:bg-white" />
+              <div className="flex justify-between text-[10px] font-medium pt-1 italic opacity-90">
+                <span>Falta Consolidar:</span>
+                <span>{formatCurrency(data.summary.receitasPrevisto - data.summary.receitas)}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
@@ -307,7 +349,18 @@ export default function RelatoriosPage() {
           <CardContent>
             <div className="text-xs text-rose-100 flex items-center gap-1">
               <div className="w-1 h-1 rounded-full bg-white animate-pulse" />
-              Gastos realizados no período
+              Gastos realizados consolidados
+            </div>
+            <div className="mt-3 space-y-1">
+              <div className="flex justify-between text-[10px] font-bold uppercase">
+                <span>Total Previsto: {formatCurrency(data.summary.despesasPrevisto)}</span>
+                <span>{Math.round((data.summary.despesas / data.summary.despesasPrevisto) * 100 || 0)}%</span>
+              </div>
+              <Progress value={(data.summary.despesas / data.summary.despesasPrevisto) * 100} className="h-1 bg-rose-400/30 [&>div]:bg-white" />
+              <div className="flex justify-between text-[10px] font-medium pt-1 italic opacity-90">
+                <span>Falta Consolidar:</span>
+                <span>{formatCurrency(data.summary.despesasPrevisto - data.summary.despesas)}</span>
+              </div>
             </div>
           </CardContent>
         </Card>
