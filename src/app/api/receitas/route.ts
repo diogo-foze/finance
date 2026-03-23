@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { getAuthSession, unauthorizedResponse } from "@/lib/auth-helper";
 import connectToDatabase from "@/lib/mongodb";
 import Receita from "@/models/Receita";
+import Cliente from "@/models/Cliente";
+import ReceitaCliente from "@/models/ReceitaCliente";
 
 export async function GET(request: Request) {
   try {
@@ -25,9 +27,28 @@ export async function GET(request: Request) {
       if (endDate) query.dataRecebimento.$lte = new Date(endDate);
     }
 
-    const receitas = await Receita.find(query).sort({ dataRecebimento: -1 });
+    // Fetch revenues (without direct populate now)
+    const receitas = await Receita.find(query).sort({ dataRecebimento: -1 }).lean();
+    
+    // Manual population from link table
+    const links = await ReceitaCliente.find({ 
+      userId: session.user.id,
+      receitaId: { $in: receitas.map(r => r._id) }
+    }).populate("clienteId", "nome cpf").lean();
 
-    return NextResponse.json(receitas);
+    // Map links and fields back to revenues
+    const result = receitas.map(r => {
+      const receitaIdStr = r._id.toString();
+      const link = links.find(l => l.receitaId.toString() === receitaIdStr);
+      
+      return {
+        ...r,
+        data: r.dataRecebimento, // Standardize field name for frontend
+        clienteId: link ? link.clienteId : undefined
+      };
+    });
+
+    return NextResponse.json(result);
   } catch (error) {
     console.error("Erro ao buscar receitas:", error);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
@@ -43,7 +64,7 @@ export async function POST(request: Request) {
     }
 
     const body = await request.json();
-    const { descricao, valor, data, categoria, tipoMovimentacao, status, valorConsolidado, dataConsolidacao } = body;
+    const { descricao, valor, data, categoria, tipoMovimentacao, status, valorConsolidado, dataConsolidacao, clienteId } = body;
 
     if (!descricao || !valor || !data || !categoria || !tipoMovimentacao) {
       return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
@@ -63,6 +84,15 @@ export async function POST(request: Request) {
         : undefined,
       dataConsolidacao: dataConsolidacao ? new Date(dataConsolidacao) : undefined,
     });
+
+    // Link com cliente se existir
+    if (clienteId) {
+      await ReceitaCliente.create({
+        userId: session.user.id,
+        receitaId: novaReceita._id,
+        clienteId: clienteId
+      });
+    }
 
     if ((global as any).io) {
       (global as any).io.emit("data_updated", { userId: session.user.id });
@@ -84,7 +114,7 @@ export async function PUT(request: Request) {
     }
 
     const body = await request.json();
-    const { id, descricao, valor, data, categoria, tipoMovimentacao, status, valorConsolidado, dataConsolidacao } = body;
+    const { id, descricao, valor, data, categoria, tipoMovimentacao, status, valorConsolidado, dataConsolidacao, clienteId } = body;
 
     if (!id || !descricao || !valor || !data || !categoria || !tipoMovimentacao) {
       return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
@@ -121,8 +151,19 @@ export async function PUT(request: Request) {
         valorConsolidado: numericValorConsolidado,
         dataConsolidacao: dataConsolidacao ? new Date(dataConsolidacao) : undefined,
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
+
+    // Gerenciar link com cliente
+    if (clienteId) {
+      await ReceitaCliente.findOneAndUpdate(
+        { userId: session.user.id, receitaId: id },
+        { clienteId: clienteId },
+        { upsert: true, returnDocument: 'after' }
+      );
+    } else {
+      await ReceitaCliente.deleteOne({ userId: session.user.id, receitaId: id });
+    }
 
     // Partial Consolidation Logic
     // Only trigger if we are moving from Planejado to Consolidado and there's a shortfall
@@ -189,6 +230,7 @@ export async function DELETE(request: Request) {
     }
 
     await connectToDatabase();
+    await ReceitaCliente.deleteOne({ userId: session.user.id, receitaId: id });
     const deletedReceita = await Receita.findOneAndDelete({ _id: id, userId: session.user.id });
 
     if (!deletedReceita) {

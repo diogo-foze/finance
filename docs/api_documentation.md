@@ -67,11 +67,39 @@ Lista as transações do usuário.
 
 ### `POST /api/receitas` | `POST /api/despesas`
 Cria uma nova transação.
-- **Corpo**: `{ "descricao": "string", "valor": number, "data": "date string", "categoria": "string", "tipoMovimentacao": "string" }`
+- **Corpo**: 
+  ```json
+  { 
+    "descricao": "string", 
+    "valor": number, 
+    "data": "YYYY-MM-DD", 
+    "categoria": "string", 
+    "tipoMovimentacao": "Fixo | Variável",
+    "status": "Planejado | Consolidado", (opcional, default: Planejado)
+    "valorConsolidado": number, (opcional)
+    "dataConsolidacao": "YYYY-MM-DD" (opcional)
+  }
+  ```
 
 ### `PUT /api/receitas` | `PUT /api/despesas`
-Atualiza uma transação existente.
-- **Corpo**: `{ "id": "string", "descricao": "string", "valor": number, ... }`
+Atualiza uma transação existente. Suporta consolidação parcial e parcelamento de saldo.
+- **Corpo**:
+  ```json
+  {
+    "id": "string",
+    "descricao": "string",
+    "valor": number,
+    "data": "YYYY-MM-DD",
+    "categoria": "string",
+    "tipoMovimentacao": "Fixo | Variável",
+    "status": "Planejado | Consolidado",
+    "valorConsolidado": number,
+    "dataConsolidacao": "YYYY-MM-DD",
+    "parcelarRestante": boolean, (se true, divide o saldo em parcelas)
+    "numeroParcelas": number (quantidade de parcelas para o saldo restante)
+  }
+  ```
+- **Lógica de Divisão**: Se `valorConsolidado < valor` durante a transição de *Planejado* para *Consolidado*, a transação original é atualizada para o valor consolidado e novas transações "Restante" são criadas para a diferença.
 
 ### `DELETE /api/receitas` | `DELETE /api/despesas`
 Remove uma transação.
@@ -79,11 +107,52 @@ Remove uma transação.
 
 ---
 
+---
+
+## 👥 Gestão de Clientes
+
+### `GET /api/clientes`
+Lista todos os clientes vinculados ao usuário logado.
+- **Resposta**: Array de objetos de cliente.
+
+### `POST /api/clientes`
+Cadastra um novo cliente. Suporta **CPF** (11 dígitos) e **CNPJ** (14 dígitos).
+- **Auto-preenchimento**: Ao inserir um CNPJ válido, a interface utiliza a API `open.cnpja.com` para preencher automaticamente o nome, e-mail e telefone.
+- **Corpo**: 
+  ```json
+  { 
+    "nome": "string", 
+    "cpf": "string", (CPF ou CNPJ)
+    "dataNascimento": "YYYY-MM-DD", (opcional)
+    "email": "string", (opcional)
+    "telefone": "string",
+    "limiteCredito": number 
+  }
+  ```
+
+### `PUT /api/clientes`
+Atualiza os dados de um cliente existente.
+- **Corpo**: `{ "id": "string", "nome": "string", ... }`
+
+### `DELETE /api/clientes`
+Remove um cliente.
+- **Query Params**: `id=ID_DO_CLIENTE`
+
+---
+
 ## 📊 Dashboard e Relatórios
 
 ### `GET /api/dashboard/stats`
-Retorna estatísticas consolidadas para o dashboard inicial.
-- **Dados**: Saldo atual, receitas/despesas do mês, dados para o gráfico de 6 meses e últimas 5 transações.
+Retorna estatísticas detalhadas para o dashboard inicial.
+- **Dados de Resumo**: 
+  - `saldo`: Balanço consolidado total.
+  - `receitas`/`despesas`: Totais planejados para o mês atual.
+  - `receitasConsolidado`/`despesasConsolidado`: Totais efetivamente consolidados no mês.
+  - `quebraCaixa`: Diferença negativa em receitas consolidadas.
+  - `imprevistos`: Diferença positiva em despesas consolidadas.
+  - `atrasosReceita`/`atrasosDespesa`: Valores planejados com data ultrapassada e não consolidados.
+- **Gráficos**: Dados de performance dos últimos 6 meses (apenas consolidados).
+- **Recentes**: Últimas 5 transações registradas.
 
 ### `POST /api/relatorios/email`
 Envia o resumo financeiro do período solicitado para o e-mail do usuário.

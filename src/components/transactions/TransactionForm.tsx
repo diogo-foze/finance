@@ -19,6 +19,12 @@ interface TransactionFormProps {
 
 import { Transaction } from "./TransactionTable";
 
+interface Cliente {
+  _id: string;
+  nome: string;
+  cpf: string;
+}
+
 export function TransactionForm({ type, onSuccess, transaction, isOpen: externalOpen, onOpenChange: setExternalOpen }: TransactionFormProps) {
   const router = useRouter();
   const [internalOpen, setInternalOpen] = useState(false);
@@ -36,8 +42,13 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
     tipoMovimentacao: "Fixo" as "Fixo" | "Variável",
     status: "Planejado" as "Planejado" | "Consolidado",
     valorConsolidado: "",
-    dataConsolidacao: new Date().toISOString().split('T')[0]
+    dataConsolidacao: new Date().toISOString().split('T')[0],
+    clienteId: ""
   });
+
+  const [customers, setCustomers] = useState<Cliente[]>([]);
+  const [customerSearch, setCustomerSearch] = useState("");
+  const [showCustomerResults, setShowCustomerResults] = useState(false);
 
   const formatInitialValue = (val: number) => {
     return val.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
@@ -45,7 +56,8 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
 
   const syncFormWithTransaction = (t: Transaction | null | undefined) => {
     if (t) {
-      setFormData({
+      setFormData(prev => ({
+        ...prev,
         descricao: t.descricao,
         valor: formatInitialValue(t.valor),
         data: new Date(t.data).toISOString().split('T')[0],
@@ -53,8 +65,14 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
         tipoMovimentacao: t.tipoMovimentacao,
         status: t.status || "Planejado",
         valorConsolidado: t.valorConsolidado ? formatInitialValue(t.valorConsolidado) : "",
-        dataConsolidacao: t.dataConsolidacao ? new Date(t.dataConsolidacao).toISOString().split('T')[0] : new Date().toISOString().split('T')[0]
-      });
+        dataConsolidacao: t.dataConsolidacao ? new Date(t.dataConsolidacao).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
+        clienteId: (t.clienteId && typeof t.clienteId === 'object') ? t.clienteId._id.toString() : (t.clienteId || "")
+      }));
+      if (t.clienteId && typeof t.clienteId === 'object') {
+        setCustomerSearch(t.clienteId.nome || "");
+      } else {
+        setCustomerSearch("");
+      }
     } else {
       setFormData({
         descricao: "",
@@ -64,15 +82,38 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
         tipoMovimentacao: "Fixo",
         status: "Planejado",
         valorConsolidado: "",
-        dataConsolidacao: new Date().toISOString().split('T')[0]
+        dataConsolidacao: new Date().toISOString().split('T')[0],
+        clienteId: ""
       });
+      setCustomerSearch("");
     }
   };
 
-  // Sync when transaction prop changes
   useEffect(() => {
     syncFormWithTransaction(transaction);
   }, [transaction]);
+
+  useEffect(() => {
+    if (type === "Receita" && open) {
+      fetch("/api/clientes")
+        .then(res => res.json())
+        .then(data => setCustomers(data))
+        .catch(err => console.error("Erro ao buscar clientes:", err));
+    }
+  }, [type, open]);
+
+  const filteredCustomers = customers.filter(c => {
+    const searchLower = customerSearch.toLowerCase();
+    const searchDigits = customerSearch.replace(/\D/g, "");
+    
+    const matchesName = c.nome.toLowerCase().includes(searchLower);
+    // Only match CPF if user typed digits
+    const matchesCpf = searchDigits !== "" && (
+      c.cpf.replace(/\D/g, "").includes(searchDigits)
+    );
+    
+    return matchesName || matchesCpf;
+  });
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -106,8 +147,10 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
           tipoMovimentacao: "Fixo",
           status: "Planejado",
           valorConsolidado: "",
-          dataConsolidacao: new Date().toISOString().split('T')[0]
+          dataConsolidacao: new Date().toISOString().split('T')[0],
+          clienteId: ""
         });
+        setCustomerSearch("");
       }
 
       if (onSuccess) {
@@ -192,6 +235,41 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
               placeholder="Ex: Salário, Aluguel..."
             />
           </div>
+
+          {type === "Receita" && (
+            <div className="space-y-2 relative">
+              <label className="text-sm font-medium">Cliente (Opcional)</label>
+              <Input
+                value={customerSearch}
+                onChange={(e) => {
+                  setCustomerSearch(e.target.value);
+                  setShowCustomerResults(true);
+                  if (!e.target.value) setFormData({ ...formData, clienteId: "" });
+                }}
+                onFocus={() => setShowCustomerResults(true)}
+                placeholder="Busque por nome ou CNPJ..."
+              />
+              {showCustomerResults && customerSearch && filteredCustomers.length > 0 && 
+              !(customers.find(c => c._id === formData.clienteId)?.nome === customerSearch) && (
+                <div className="absolute z-10 w-full bg-white dark:bg-zinc-900 border rounded-md shadow-lg max-h-48 overflow-y-auto mt-1">
+                  {filteredCustomers.map(c => (
+                    <div
+                      key={c._id}
+                      className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, clienteId: c._id }));
+                        setCustomerSearch(c.nome);
+                        setShowCustomerResults(false);
+                      }}
+                    >
+                      <div className="font-medium">{c.nome}</div>
+                      <div className="text-[10px] text-muted-foreground">{c.cpf}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
           <div className="space-y-2">
             <label className="text-sm font-medium">Valor (R$)</label>
             <Input

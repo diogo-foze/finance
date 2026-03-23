@@ -1,4 +1,5 @@
 import mongoose, { Schema, model, models } from "mongoose";
+import "./Cliente"; // Ensure Cliente model is registered
 
 const ReceitaSchema = new Schema(
   {

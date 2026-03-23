@@ -26,7 +26,8 @@ export default function ReceitasPage() {
           tipoMovimentacao: item.tipoMovimentacao,
           status: item.status,
           valorConsolidado: item.valorConsolidado,
-          dataConsolidacao: item.dataConsolidacao
+          dataConsolidacao: item.dataConsolidacao,
+          clienteId: item.clienteId
         }));
         setReceitas(transformed);
       }

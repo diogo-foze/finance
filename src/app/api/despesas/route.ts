@@ -121,7 +121,7 @@ export async function PUT(request: Request) {
         valorConsolidado: numericValorConsolidado,
         dataConsolidacao: dataConsolidacao ? new Date(dataConsolidacao) : undefined,
       },
-      { new: true }
+      { returnDocument: 'after' }
     );
 
     // Partial Consolidation Logic

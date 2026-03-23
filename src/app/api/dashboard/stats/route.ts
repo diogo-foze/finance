@@ -150,10 +150,25 @@ export async function GET(request: Request) {
     }
 
     // 4. Recent Transactions
-    const [lastReceitas, lastDespesas] = await Promise.all([
+    const [lastReceitasRaw, lastDespesas] = await Promise.all([
       Receita.find({ userId: mongooseUserId }).sort({ dataRecebimento: -1 }).limit(5).lean(),
       Despesa.find({ userId: mongooseUserId }).sort({ dataVencimento: -1 }).limit(5).lean()
     ]);
+
+    // Populate links for receitas
+    const ReceitaCliente = (await import("@/models/ReceitaCliente")).default;
+    const links = await ReceitaCliente.find({
+      userId: mongooseUserId,
+      receitaId: { $in: lastReceitasRaw.map(r => r._id) }
+    }).populate("clienteId", "nome cpf").lean();
+
+    const lastReceitas = lastReceitasRaw.map(r => {
+      const link = links.find(l => l.receitaId.toString() === r._id.toString());
+      return {
+        ...r,
+        clienteId: link ? link.clienteId : undefined
+      };
+    });
 
     const recentTransactions = [
       ...lastReceitas.map((r: any) => ({ ...r, type: "Receita", data: r.dataRecebimento })),

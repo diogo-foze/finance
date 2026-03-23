@@ -9,6 +9,7 @@ import { Button } from "@/components/ui/button";
 
 const navItems = [
   { name: "Dashboard", href: "/dashboard", icon: LayoutDashboard },
+  { name: "Clientes", href: "/clientes", icon: Users },
   { name: "Receitas", href: "/receitas", icon: Landmark },
   { name: "Despesas", href: "/despesas", icon: Receipt },
   { name: "Relatórios", href: "/relatorios", icon: PieChart },
@@ -29,7 +30,7 @@ export function Sidebar({ className }: { className?: string }) {
       <div className="flex h-16 items-center px-6 font-bold text-2xl tracking-tight text-white">
         <span className="text-primary mr-1">Finan</span>Sys
       </div>
-      
+
       <div className="px-3 py-2">
         <p className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2">Menu</p>
         <nav className="space-y-1">
@@ -42,8 +43,8 @@ export function Sidebar({ className }: { className?: string }) {
                 href={item.href}
                 className={cn(
                   "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  isActive 
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" 
+                  isActive
+                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                     : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                 )}
               >
@@ -70,8 +71,8 @@ export function Sidebar({ className }: { className?: string }) {
                   href={item.href}
                   className={cn(
                     "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                    isActive 
-                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm" 
+                    isActive
+                      ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
                       : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
                   )}
                 >
@@ -85,8 +86,8 @@ export function Sidebar({ className }: { className?: string }) {
       )}
 
       <div className="p-4 mt-auto border-t border-sidebar-border">
-        <Link 
-          href="/perfil" 
+        <Link
+          href="/perfil"
           className="mb-2 flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group"
         >
           {session?.user?.image ? (
@@ -99,8 +100,8 @@ export function Sidebar({ className }: { className?: string }) {
             <p className="text-[10px] text-white/50 group-hover:text-sidebar-accent-foreground/70 transition-colors truncate font-medium">{session?.user?.email}</p>
           </div>
         </Link>
-        <Button 
-          variant="ghost" 
+        <Button
+          variant="ghost"
           className="w-full justify-start text-sidebar-foreground/70 hover:text-sidebar-accent-foreground hover:bg-sidebar-accent"
           onClick={() => {
             sessionStorage.removeItem("financial_visibility");

@@ -33,6 +33,7 @@ export interface Transaction {
   status: "Planejado" | "Consolidado";
   valorConsolidado?: number;
   dataConsolidacao?: string;
+  clienteId?: string | { _id: string; nome: string; cpf: string };
 }
 
 interface TransactionTableProps {
@@ -219,7 +220,16 @@ export function TransactionTable({ transactions, type, onRowClick, onConsolidate
                   className={onRowClick ? "cursor-pointer hover:bg-muted/50 transition-colors" : ""}
                   onClick={() => onRowClick && onRowClick(transaction)}
                 >
-                  <TableCell className="font-medium">{transaction.descricao}</TableCell>
+                  <TableCell className="font-medium">
+                    <div className="flex flex-col">
+                      <span>{transaction.descricao}</span>
+                      {transaction.clienteId && typeof transaction.clienteId === 'object' && (
+                        <span className="text-[10px] text-muted-foreground font-normal">
+                          Cliente: {transaction.clienteId.nome}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
                   <TableCell>{transaction.categoria}</TableCell>
                   <TableCell>
                     <Badge variant="outline" className={transaction.tipoMovimentacao === "Fixo" ? "bg-accent" : ""}>

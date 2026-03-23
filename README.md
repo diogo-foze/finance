@@ -24,6 +24,14 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 
 ## Learn More
 
+### 🚀 Últimas Atualizações e Funcionalidades
+
+- **Consolidação Inteligente**: Agora é possível marcar transações como "Consolidadas", confirmando o valor exato recebido ou pago.
+- **Consolidação Parcial e Parcelamento**: Se você receber ou pagar menos que o previsto, o sistema permite criar um "Restante" automaticamente ou parcelar a diferença para os meses seguintes.
+- **Dashboard e Relatórios Consolidados**: Visão clara entre o que foi **Planejado** vs. **Efetivado**, com barras de progresso dinâmicas.
+- **Detecção de Imprevistos e Quebra de Caixa**: Identificação automática de desvios financeiros diretamente no dashboard.
+- **Falta Consolidar**: Novos indicadores em relatórios mostrando o quanto ainda resta para atingir a meta do mês.
+
 ### Task List and Implementation Plan
 
 - [x] Update Dashboard UI "Gestão de Usuários" card content
