@@ -44,13 +44,13 @@ export default function ClientesPage() {
     setIsFormOpen(true);
   };
 
-  const activeCustomers = customers.filter((c: any) => c.ativo !== false);
+  const activeCustomers = customers.filter((c: any) => Number(c.ativo) !== 0);
   const totalCreditLimit = activeCustomers.reduce((acc: number, c: any) => acc + (c.limiteCredito || 0), 0);
   const totalUsedCredit = activeCustomers.reduce((acc: number, c: any) => acc + (c.creditoUtilizado || 0), 0);
 
   return (
     <div className="flex-1 space-y-6 pb-10">
-      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-1">
+      <div className="flex flex-col md:flex-row md:items-center justify-between gap-4 px-2">
         <div>
           <h2 className="text-3xl font-extrabold tracking-tight text-zinc-900 dark:text-white">Gestão de Clientes</h2>
           <p className="text-zinc-500 dark:text-zinc-400">Gerencie sua base de clientes e limites de crédito em um só lugar.</p>
@@ -65,7 +65,7 @@ export default function ClientesPage() {
               className="w-4 h-4 cursor-pointer"
             />
             <label htmlFor="show-inactive" className="text-xs font-medium cursor-pointer select-none">
-              Mostrar Inativos
+              Mostrar Desativados
             </label>
           </div>
           <Button onClick={handleCreate} className="rounded-xl shadow-lg shadow-primary/20 gap-2">

@@ -74,7 +74,8 @@ export function TransactionTable({ transactions, type, onRowClick, onConsolidate
       const lowerQuery = searchQuery.toLowerCase();
       filtered = filtered.filter(t => 
         t.descricao.toLowerCase().includes(lowerQuery) || 
-        t.categoria.toLowerCase().includes(lowerQuery)
+        t.categoria.toLowerCase().includes(lowerQuery) ||
+        (t.clienteId && typeof t.clienteId === 'object' && t.clienteId.nome.toLowerCase().includes(lowerQuery))
       );
     }
 
@@ -144,7 +145,7 @@ export function TransactionTable({ transactions, type, onRowClick, onConsolidate
             <Search className="w-3 h-3" /> Busca
           </label>
           <Input 
-            placeholder="Buscar por descrição ou categoria..." 
+            placeholder="Buscar por descrição, categoria ou cliente..." 
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="w-full"

@@ -22,7 +22,8 @@ import {
   Phone, 
   Mail, 
   CreditCard,
-  DollarSign
+  DollarSign,
+  Power
 } from "lucide-react";
 import { toast } from "sonner";
 import { CustomerRevenuesModal } from "./CustomerRevenuesModal";
@@ -63,17 +64,19 @@ export function CustomerTable({ customers, onEdit, onRefresh }: CustomerTablePro
     currentPage * itemsPerPage
   );
 
-  const handleDelete = async (id: string) => {
-    if (!confirm("Tem certeza que deseja desativar este cliente?")) return;
+  const handleToggleStatus = async (customer: any) => {
+    const isActivating = Number(customer.ativo) === 0;
+    if (!confirm(`Tem certeza que deseja ${isActivating ? 'ativar' : 'desativar'} este cliente?`)) return;
 
     try {
-      const response = await fetch(`/api/clientes?id=${id}`, {
+      const response = await fetch(`/api/clientes?id=${customer._id}`, {
         method: "DELETE",
       });
 
-      if (!response.ok) throw new Error("Erro ao excluir cliente");
+      const data = await response.json();
+      if (!response.ok) throw new Error(data.error || "Erro ao alterar status");
 
-      toast.success("Cliente desativado com sucesso!");
+      toast.success(data.message || `Cliente ${isActivating ? "ativado" : "desativado"} com sucesso!`);
       onRefresh();
     } catch (error: any) {
       toast.error(error.message);
@@ -116,7 +119,7 @@ export function CustomerTable({ customers, onEdit, onRefresh }: CustomerTablePro
                 <TableRow key={customer._id} className="hover:bg-muted/50 transition-colors">
                   <TableCell>
                     <div className="flex items-center gap-3 text-pretty">
-                      <div className="w-8 h-8 rounded-full bg-primary/10 flex items-center justify-center text-primary">
+                      <div className={`w-8 h-8 rounded-full flex items-center justify-center ${Number(customer.ativo) === 0 ? 'bg-destructive/10 text-destructive' : 'bg-primary/10 text-primary'}`}>
                         <User className="w-4 h-4" />
                       </div>
                       <div 
@@ -125,9 +128,9 @@ export function CustomerTable({ customers, onEdit, onRefresh }: CustomerTablePro
                       >
                         <div className="flex items-center gap-2">
                           <span className="font-semibold text-zinc-900 dark:text-zinc-100">{customer.nome}</span>
-                          {customer.ativo === false && (
+                          {Number(customer.ativo) === 0 && (
                             <Badge variant="outline" className="text-[9px] h-4 bg-zinc-100 text-zinc-500 border-zinc-200">
-                              Inativo
+                              Desativado
                             </Badge>
                           )}
                         </div>
@@ -181,10 +184,11 @@ export function CustomerTable({ customers, onEdit, onRefresh }: CustomerTablePro
                       <Button
                         variant="ghost"
                         size="icon"
-                        className="h-8 w-8 text-zinc-500 hover:text-destructive hover:bg-destructive/10"
-                        onClick={() => handleDelete(customer._id)}
+                        className={`h-8 w-8 ${Number(customer.ativo) === 0 ? 'text-emerald-500 hover:text-emerald-600 hover:bg-emerald-50' : 'text-zinc-500 hover:text-destructive hover:bg-destructive/10'}`}
+                        onClick={() => handleToggleStatus(customer)}
+                        title={Number(customer.ativo) === 0 ? "Ativar Cliente" : "Desativar Cliente"}
                       >
-                        <Trash2 className="w-4 h-4" />
+                        <Power className="w-4 h-4" />
                       </Button>
                     </div>
                   </TableCell>

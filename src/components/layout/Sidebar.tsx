@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useSession, signOut } from "next-auth/react";
-import { LayoutDashboard, Receipt, Landmark, PieChart, LogOut, Users, ShieldCheck, MessageSquare, UserCircle } from "lucide-react";
+import { LayoutDashboard, Receipt, Landmark, PieChart, LogOut, Users, ShieldCheck, MessageSquare, UserCircle, FileCode } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 
@@ -14,6 +14,7 @@ const navItems = [
   { name: "Despesas", href: "/despesas", icon: Receipt },
   { name: "Relatórios", href: "/relatorios", icon: PieChart },
   { name: "Mensagens", href: "/mensagens", icon: MessageSquare },
+  { name: "Documentação", href: "/documentacao", icon: FileCode },
 ];
 
 const adminItems = [

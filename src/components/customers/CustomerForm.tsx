@@ -13,6 +13,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
+import { Switch } from "@/components/ui/switch";
 
 interface CustomerFormProps {
   customer?: any;
@@ -43,7 +44,7 @@ export function CustomerForm({ customer, isOpen, setOpen, onSuccess }: CustomerF
         email: customer.email || "",
         telefone: customer.telefone,
         limiteCredito: customer.limiteCredito?.toLocaleString("pt-BR", { minimumFractionDigits: 2 }) || "0,00",
-        ativo: customer.ativo !== false,
+        ativo: Number(customer.ativo) !== 0,
       });
     } else {
       setFormData({
@@ -82,9 +83,9 @@ export function CustomerForm({ customer, isOpen, setOpen, onSuccess }: CustomerF
 
   const handleCpfCnpjChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let value = e.target.value.replace(/\D/g, "");
-    
+
     if (value.length > 14) value = value.slice(0, 14);
-    
+
     if (value.length <= 11) {
       // CPF: 000.000.000-00
       value = value.replace(/(\d{3})(\d)/, "$1.$2");
@@ -96,12 +97,12 @@ export function CustomerForm({ customer, isOpen, setOpen, onSuccess }: CustomerF
       value = value.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
       value = value.replace(/\.(\d{3})(\d)/, ".$1/$2");
       value = value.replace(/(\d{4})(\d)/, "$1-$2");
-      
+
       if (value.replace(/\D/g, "").length === 14) {
         fetchCnpjData(value);
       }
     }
-    
+
     setFormData({ ...formData, cpf: value });
 
     // Validate if it's potentially complete
@@ -174,7 +175,7 @@ export function CustomerForm({ customer, isOpen, setOpen, onSuccess }: CustomerF
           email: formData.email,
           telefone: formData.telefone,
           limiteCredito: Number(formData.limiteCredito.replace(/\./g, "").replace(",", ".")),
-          ativo: !!formData.ativo,
+          ativo: formData.ativo ? 1 : 0,
         }),
       });
 
@@ -268,30 +269,22 @@ export function CustomerForm({ customer, isOpen, setOpen, onSuccess }: CustomerF
           </div>
 
           {customer && (
-            <div className="space-y-2 p-3 bg-muted/30 rounded-lg border">
-              <label className="text-sm font-medium">Status do Cliente</label>
-              <Select
-                value={formData.ativo ? "ativo" : "inativo"}
-                onValueChange={(value) => setFormData({ ...formData, ativo: value === "ativo" })}
-              >
-                <SelectTrigger className="w-full bg-background">
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="ativo">
-                    <span className="flex items-center gap-2">
-                       <span className="w-2 h-2 rounded-full bg-emerald-500" />
-                       Ativo
-                    </span>
-                  </SelectItem>
-                  <SelectItem value="inativo">
-                    <span className="flex items-center gap-2">
-                       <span className="w-2 h-2 rounded-full bg-zinc-400" />
-                       Inativo
-                    </span>
-                  </SelectItem>
-                </SelectContent>
-              </Select>
+            <div className="flex items-center justify-between p-4 bg-muted/30 rounded-xl border border-zinc-200/50">
+              <div className="space-y-0.5">
+                <label className="text-sm font-semibold text-zinc-900 dark:text-zinc-100">Status do Cliente</label>
+                <p className="text-xs text-muted-foreground">
+                  {formData.ativo ? "Cliente está ativado e visível" : "Cliente está desativado"}
+                </p>
+              </div>
+              <div className="flex items-center gap-3">
+                <span className={`text-xs font-bold uppercase tracking-wider ${formData.ativo ? 'text-emerald-600' : 'text-zinc-400'}`}>
+                  {formData.ativo ? "Ativado" : "Desativado"}
+                </span>
+                <Switch
+                  checked={formData.ativo}
+                  onCheckedChange={(checked) => setFormData({ ...formData, ativo: checked })}
+                />
+              </div>
             </div>
           )}
 

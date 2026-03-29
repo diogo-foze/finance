@@ -126,7 +126,8 @@ Cadastra um novo cliente. Suporta **CPF** (11 dígitos) e **CNPJ** (14 dígitos)
     "dataNascimento": "YYYY-MM-DD", (opcional)
     "email": "string", (opcional)
     "telefone": "string",
-    "limiteCredito": number 
+    "limiteCredito": number,
+    "ativo": number (0 | 1) // opcional, padrão 1
   }
   ```
 

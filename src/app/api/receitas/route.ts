@@ -170,6 +170,9 @@ export async function PUT(request: Request) {
     if (status === "Consolidado" && originalReceita.status === "Planejado" && numericValorConsolidado && numericValorConsolidado < originalReceita.valor) {
       const { parcelarRestante, numeroParcelas } = body;
       const diff = originalReceita.valor - numericValorConsolidado;
+      
+      // Get current customer link if any
+      const currentLink = await ReceitaCliente.findOne({ receitaId: id, userId: session.user.id });
 
       if (parcelarRestante && numeroParcelas > 0) {
         const valorParcela = diff / numeroParcelas;
@@ -179,7 +182,7 @@ export async function PUT(request: Request) {
           const parcelDate = new Date(baseDate);
           parcelDate.setMonth(parcelDate.getMonth() + i);
           
-          await Receita.create({
+          const pReceita = await Receita.create({
             userId: session.user.id,
             descricao: `${descricao} (Parc ${i}/${numeroParcelas})`,
             valor: valorParcela,
@@ -188,10 +191,18 @@ export async function PUT(request: Request) {
             tipoMovimentacao,
             status: "Planejado"
           });
+
+          if (currentLink) {
+            await ReceitaCliente.create({
+              userId: session.user.id,
+              receitaId: pReceita._id,
+              clienteId: currentLink.clienteId
+            });
+          }
         }
       } else {
         // Just leave the remainder open
-        await Receita.create({
+        const rReceita = await Receita.create({
           userId: session.user.id,
           descricao: `${descricao} (Restante)`,
           valor: diff,
@@ -200,6 +211,14 @@ export async function PUT(request: Request) {
           tipoMovimentacao,
           status: "Planejado"
         });
+
+        if (currentLink) {
+          await ReceitaCliente.create({
+            userId: session.user.id,
+            receitaId: rReceita._id,
+            clienteId: currentLink.clienteId
+          });
+        }
       }
     }
 

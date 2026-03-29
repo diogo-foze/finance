@@ -30,8 +30,9 @@ const ClienteSchema = new Schema(
       default: 0,
     },
     ativo: {
-      type: Boolean,
-      default: true,
+      type: Number,
+      default: 1,
+      required: true,
     },
   },
   { timestamps: true }
@@ -41,6 +42,9 @@ const ClienteSchema = new Schema(
 ClienteSchema.index({ userId: 1, cpf: 1 }, { unique: true });
 ClienteSchema.index({ userId: 1, nome: 1 });
 
-const Cliente = models.Cliente || model("Cliente", ClienteSchema);
+if (mongoose.models.Cliente) {
+  delete mongoose.models.Cliente;
+}
+const Cliente = model("Cliente", ClienteSchema);
 
 export default Cliente;

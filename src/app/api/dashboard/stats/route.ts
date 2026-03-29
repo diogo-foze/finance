@@ -4,6 +4,8 @@ import connectToDatabase from "@/lib/mongodb";
 import Receita from "@/models/Receita";
 import Despesa from "@/models/Despesa";
 import User from "@/models/User";
+import Cliente from "@/models/Cliente";
+import ReceitaCliente from "@/models/ReceitaCliente";
 import mongoose from "mongoose";
 import { startOfMonth, subMonths, format, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
@@ -156,7 +158,6 @@ export async function GET(request: Request) {
     ]);
 
     // Populate links for receitas
-    const ReceitaCliente = (await import("@/models/ReceitaCliente")).default;
     const links = await ReceitaCliente.find({
       userId: mongooseUserId,
       receitaId: { $in: lastReceitasRaw.map(r => r._id) }
