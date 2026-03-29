@@ -56,11 +56,6 @@ const UserSchema = new Schema(
   { timestamps: true }
 );
 
-// Force refresh model if schema changed
-if (process.env.NODE_ENV === "development") {
-  delete (mongoose as any).models.User;
-}
-
-const User = models.User || model("User", UserSchema);
+const User = mongoose.models.User || mongoose.model("User", UserSchema);
 
 export default User;

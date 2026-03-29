@@ -14,6 +14,13 @@ const ClienteSchema = new Schema(
     cpf: {
       type: String,
       required: true,
+      validate: {
+        validator: function(v: string) {
+          // Simple regex for format and length
+          return /^\d{11}$/.test(v);
+        },
+        message: (props: any) => `${props.value} não é um CPF válido! O CPF deve conter 11 dígitos numéricos.`
+      }
     },
     dataNascimento: {
       type: Date,
@@ -42,9 +49,6 @@ const ClienteSchema = new Schema(
 ClienteSchema.index({ userId: 1, cpf: 1 }, { unique: true });
 ClienteSchema.index({ userId: 1, nome: 1 });
 
-if (mongoose.models.Cliente) {
-  delete mongoose.models.Cliente;
-}
-const Cliente = model("Cliente", ClienteSchema);
+const Cliente = mongoose.models.Cliente || mongoose.model("Cliente", ClienteSchema);
 
 export default Cliente;
