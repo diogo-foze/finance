@@ -21,15 +21,21 @@ export async function getAuthSession(request: Request) {
       return { 
         user: { 
           id: decoded.id, 
+          name: decoded.name || "",
           email: decoded.email, 
-          role: decoded.role,
-          username: decoded.username 
+          role: decoded.role || "user",
+          username: decoded.username || "",
+          isEmailVerified: !!decoded.isEmailVerified
         } 
       };
     } catch (error) {
       console.error("Erro na verificação do JWT:", error);
       return null;
     }
+  }
+
+  if (!session?.user) {
+    console.log("[Auth-Helper] No session or token found for request:", request.url);
   }
 
   return null;

@@ -13,7 +13,8 @@ import {
   ChevronRight,
   Code2,
   Lock,
-  Globe
+  Globe,
+  Truck
 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { Badge } from "@/components/ui/badge";
@@ -23,6 +24,7 @@ const sections = [
   { id: "profile", title: "Perfil e Usuário", icon: User },
   { id: "finance", title: "Gestão Financeira", icon: Banknote },
   { id: "customers", title: "Gestão de Clientes", icon: Users },
+  { id: "suppliers", title: "Gestão de Fornecedores", icon: Truck },
   { id: "dashboard", title: "Relatórios e Stats", icon: LayoutDashboard },
   { id: "messages", title: "Sistema de Chat", icon: MessageSquare },
   { id: "admin", title: "Administração", icon: Settings },
@@ -67,6 +69,17 @@ const apiDocs = {
       { method: "POST", path: "/api/clientes", desc: "Cadastra cliente (suporta auto-preenchimento CNPJ)." },
       { method: "PUT", path: "/api/clientes", desc: "Atualiza dados ou status (ativo/desativado)." },
       { method: "DELETE", path: "/api/clientes", desc: "Alterna status de ativação do cliente." },
+    ]
+  },
+  suppliers: {
+    title: "Gestão de Fornecedores",
+    description: "Controle de fornecedores e suas despesas vinculadas.",
+    endpoints: [
+      { method: "GET", path: "/api/fornecedores", desc: "Lista fornecedores com saldo de débito calculado." },
+      { method: "POST", path: "/api/fornecedores", desc: "Cadastra fornecedor com suporte a CPF/CNPJ." },
+      { method: "PUT", path: "/api/fornecedores", desc: "Atualiza dados do fornecedor." },
+      { method: "DELETE", path: "/api/fornecedores", desc: "Ativa ou desativa um fornecedor." },
+      { method: "GET", path: "/api/fornecedores/despesas", desc: "Busca despesas planejadas de um fornecedor específico." },
     ]
   },
   dashboard: {

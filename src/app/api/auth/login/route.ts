@@ -51,6 +51,7 @@ export async function POST(request: Request) {
     const token = jwt.sign(
       { 
         id: user._id, 
+        name: user.name,
         email: user.email, 
         role: user.role,
         username: user.username 

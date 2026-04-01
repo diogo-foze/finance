@@ -30,6 +30,9 @@ This project uses [`next/font`](https://nextjs.org/docs/app/building-your-applic
 - **Consolidação Parcial e Parcelamento**: Se você receber ou pagar menos que o previsto, o sistema permite criar um "Restante" automaticamente ou parcelar a diferença para os meses seguintes.
 - **Dashboard e Relatórios Consolidados**: Visão clara entre o que foi **Planejado** vs. **Efetivado**, com barras de progresso dinâmicas.
 - **Detecção de Imprevistos e Quebra de Caixa**: Identificação automática de desvios financeiros diretamente no dashboard.
+- **Gestão de Fornecedores**: Módulo completo para parceiros, com histórico de despesas e limites de crédito.
+- **Busca Global por Entidade**: Agora é possível buscar receitas pelo nome do cliente e despesas pelo nome do fornecedor na barra de pesquisa.
+- **Cards de Indicadores de Fornecedores**: Resumo em tempo real de fornecedores ativos, limite de crédito disponível e dívida em aberto.
 - **Falta Consolidar**: Novos indicadores em relatórios mostrando o quanto ainda resta para atingir a meta do mês.
 
 ### Task List and Implementation Plan

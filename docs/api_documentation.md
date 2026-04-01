@@ -141,6 +141,42 @@ Remove um cliente.
 
 ---
 
+## 🚛 Gestão de Fornecedores
+
+### `GET /api/fornecedores`
+Lista todos os fornecedores vinculados ao usuário logado.
+- **Query Params**: `all=true` (opcional, mostra inclusive os desativados).
+- **Resposta**: Array de objetos de fornecedor, incluindo o campo calculado `creditoUtilizado` (soma das despesas planejadas vinculadas).
+
+### `POST /api/fornecedores`
+Cadastra um novo fornecedor. Suporta **CPF** e **CNPJ**.
+- **Corpo**: 
+  ```json
+  { 
+    "nome": "string", 
+    "cpf": "string",
+    "email": "string", (opcional)
+    "telefone": "string",
+    "limiteCredito": number,
+    "ativo": number (0 | 1)
+  }
+  ```
+
+### `PUT /api/fornecedores`
+Atualiza os dados de um fornecedor existente.
+- **Corpo**: `{ "id": "string", "nome": "string", ... }`
+
+### `DELETE /api/fornecedores`
+Altera o status de ativação do fornecedor (Ativa/Desativa).
+- **Query Params**: `id=ID_DO_FORNECEDOR`
+
+### `GET /api/fornecedores/despesas`
+Busca todas as despesas planejadas vinculadas a um fornecedor específico.
+- **Query Params**: `id=ID_DO_FORNECEDOR`
+- **Resposta**: Array de despesas com status "Planejado".
+
+---
+
 ## 📊 Dashboard e Relatórios
 
 ### `GET /api/dashboard/stats`

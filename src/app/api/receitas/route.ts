@@ -7,9 +7,9 @@ import ReceitaCliente from "@/models/ReceitaCliente";
 import mongoose from "mongoose";
 
 // Garantir que os modelos estão registrados corretamente
-if (!mongoose.models.Receita) {
-  // Re-importing might help if it was a file cache, but we just want to re-register
-}
+import "@/models/Receita";
+import "@/models/Cliente";
+import "@/models/ReceitaCliente";
 
 
 export async function GET(request: Request) {
@@ -25,9 +25,9 @@ export async function GET(request: Request) {
     const endDate = searchParams.get("endDate");
 
     await connectToDatabase();
-    
+
     let query: any = { userId: new mongoose.Types.ObjectId(session.user.id) };
-    
+
     if (startDate || endDate) {
       query.dataRecebimento = {};
       if (startDate && startDate !== "null" && startDate !== "undefined") {
@@ -36,7 +36,7 @@ export async function GET(request: Request) {
       if (endDate && endDate !== "null" && endDate !== "undefined") {
         query.dataRecebimento.$lte = new Date(endDate);
       }
-      
+
       // Se as datas resultarem em inválidas, remover o filtro
       if (query.dataRecebimento.$gte && isNaN(query.dataRecebimento.$gte.getTime())) delete query.dataRecebimento.$gte;
       if (query.dataRecebimento.$lte && isNaN(query.dataRecebimento.$lte.getTime())) delete query.dataRecebimento.$lte;
@@ -45,18 +45,18 @@ export async function GET(request: Request) {
 
     // Fetch revenues (without direct populate now)
     const receitas = await Receita.find(query).sort({ dataRecebimento: -1 }).lean();
-    
+
     // Manual population from link table
-    const links = await ReceitaCliente.find({ 
+    const links = await ReceitaCliente.find({
       userId: session.user.id,
       receitaId: { $in: receitas.map(r => r._id) }
-    }).populate("clienteId", "nome cpf").lean();
+    }).populate({ path: "clienteId", model: Cliente, select: "nome cpf" }).lean();
 
     // Map links and fields back to revenues
     const result = receitas.map(r => {
       const receitaIdStr = r._id.toString();
       const link = links.find(l => l.receitaId.toString() === receitaIdStr);
-      
+
       return {
         ...r,
         data: r.dataRecebimento, // Standardize field name for frontend
@@ -67,7 +67,7 @@ export async function GET(request: Request) {
     return NextResponse.json(result);
   } catch (error: any) {
     console.error("Erro ao buscar receitas:", error);
-    return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Erro interno do servidor" }, { status: 500 });
   }
 }
 
@@ -95,8 +95,8 @@ export async function POST(request: Request) {
       categoria,
       tipoMovimentacao,
       status: status || "Planejado",
-      valorConsolidado: (valorConsolidado !== undefined && valorConsolidado !== null && valorConsolidado !== "") 
-        ? Number(valorConsolidado.toString().replace(/\./g, "").replace(",", ".")) 
+      valorConsolidado: (valorConsolidado !== undefined && valorConsolidado !== null && valorConsolidado !== "")
+        ? Number(valorConsolidado.toString().replace(/\./g, "").replace(",", "."))
         : undefined,
       dataConsolidacao: dataConsolidacao ? new Date(dataConsolidacao) : undefined,
     });
@@ -137,7 +137,7 @@ export async function PUT(request: Request) {
     }
 
     await connectToDatabase();
-    
+
     // Fetch original to check for partial consolidation
     const originalReceita = await Receita.findOne({ _id: id, userId: session.user.id });
     if (!originalReceita) {
@@ -145,8 +145,8 @@ export async function PUT(request: Request) {
     }
 
     const numericValor = typeof valor === 'string' ? Number(valor.replace(/\./g, "").replace(",", ".")) : valor;
-    const numericValorConsolidado = (valorConsolidado !== undefined && valorConsolidado !== null && valorConsolidado !== "") 
-      ? Number(valorConsolidado.toString().replace(/\./g, "").replace(",", ".")) 
+    const numericValorConsolidado = (valorConsolidado !== undefined && valorConsolidado !== null && valorConsolidado !== "")
+      ? Number(valorConsolidado.toString().replace(/\./g, "").replace(",", "."))
       : undefined;
 
     // Use the consolidated value as the new 'valor' (planned) if we're splitting,
@@ -186,18 +186,18 @@ export async function PUT(request: Request) {
     if (status === "Consolidado" && originalReceita.status === "Planejado" && numericValorConsolidado && numericValorConsolidado < originalReceita.valor) {
       const { parcelarRestante, numeroParcelas } = body;
       const diff = originalReceita.valor - numericValorConsolidado;
-      
+
       // Get current customer link if any
       const currentLink = await ReceitaCliente.findOne({ receitaId: id, userId: session.user.id });
 
       if (parcelarRestante && numeroParcelas > 0) {
         const valorParcela = diff / numeroParcelas;
         const baseDate = new Date(originalReceita.dataRecebimento);
-        
+
         for (let i = 1; i <= numeroParcelas; i++) {
           const parcelDate = new Date(baseDate);
           parcelDate.setMonth(parcelDate.getMonth() + i);
-          
+
           const pReceita = await Receita.create({
             userId: session.user.id,
             descricao: `${descricao} (Parc ${i}/${numeroParcelas})`,

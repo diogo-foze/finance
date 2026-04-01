@@ -10,6 +10,11 @@ import mongoose from "mongoose";
 import { startOfMonth, subMonths, format, endOfMonth } from "date-fns";
 import { ptBR } from "date-fns/locale/pt-BR";
 
+// As importações originais de modelos já estão no topo do arquivo.
+import Fornecedor from "@/models/Fornecedor";
+import DespesaFornecedor from "@/models/DespesaFornecedor";
+import Config from "@/models/Config";
+
 export async function GET(request: Request) {
   try {
     const session = await getAuthSession(request);
@@ -20,7 +25,7 @@ export async function GET(request: Request) {
 
     await connectToDatabase();
     const userId = session.user.id;
-    
+
     // Validate if userId is a standard 24-char hex ObjectId
     if (!mongoose.Types.ObjectId.isValid(userId)) {
       console.error(`[Dashboard API] Invalid userId format: ${userId}`);
@@ -40,19 +45,21 @@ export async function GET(request: Request) {
       // Current Month Stats for Progress Bar
       Receita.aggregate([
         { $match: { userId: mongooseUserId, dataRecebimento: { $gte: currentMonthStart, $lte: currentMonthEnd } } },
-        { 
-          $group: { 
-            _id: null, 
+        {
+          $group: {
+            _id: null,
             totalPlanejado: { $sum: "$valor" },
-            totalConsolidado: { $sum: { 
-              $cond: [
-                { $eq: ["$status", "Consolidado"] },
-                { $ifNull: ["$valorConsolidado", "$valor"] },
-                0
-              ]
-            } },
-            quebraCaixa: { 
-              $sum: { 
+            totalConsolidado: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$status", "Consolidado"] },
+                  { $ifNull: ["$valorConsolidado", "$valor"] },
+                  0
+                ]
+              }
+            },
+            quebraCaixa: {
+              $sum: {
                 $cond: [
                   { $eq: ["$status", "Consolidado"] },
                   { $max: [0, { $subtract: ["$valor", { $ifNull: ["$valorConsolidado", "$valor"] }] }] },
@@ -60,24 +67,26 @@ export async function GET(request: Request) {
                 ]
               }
             }
-          } 
+          }
         }
       ]),
       Despesa.aggregate([
         { $match: { userId: mongooseUserId, dataVencimento: { $gte: currentMonthStart, $lte: currentMonthEnd } } },
-        { 
-          $group: { 
-            _id: null, 
+        {
+          $group: {
+            _id: null,
             totalPlanejado: { $sum: "$valor" },
-            totalConsolidado: { $sum: { 
-              $cond: [
-                { $eq: ["$status", "Consolidado"] },
-                { $ifNull: ["$valorConsolidado", "$valor"] },
-                0
-              ]
-            } },
-            imprevistos: { 
-              $sum: { 
+            totalConsolidado: {
+              $sum: {
+                $cond: [
+                  { $eq: ["$status", "Consolidado"] },
+                  { $ifNull: ["$valorConsolidado", "$valor"] },
+                  0
+                ]
+              }
+            },
+            imprevistos: {
+              $sum: {
                 $cond: [
                   { $eq: ["$status", "Consolidado"] },
                   { $max: [0, { $subtract: [{ $ifNull: ["$valorConsolidado", "$valor"] }, "$valor"] }] },
@@ -85,7 +94,7 @@ export async function GET(request: Request) {
                 ]
               }
             }
-          } 
+          }
         }
       ]),
       // Delays (Past date AND not consolidated)
@@ -101,10 +110,10 @@ export async function GET(request: Request) {
 
     const totalReceitas = summaryResults[0][0]?.total || 0;
     const totalDespesas = summaryResults[1][0]?.total || 0;
-    
+
     const receitaStats = summaryResults[2][0] || { totalPlanejado: 0, totalConsolidado: 0, quebraCaixa: 0 };
     const despesaStats = summaryResults[3][0] || { totalPlanejado: 0, totalConsolidado: 0, imprevistos: 0 };
-    
+
     const atrasosReceita = summaryResults[4][0]?.total || 0;
     const atrasosDespesa = summaryResults[5][0]?.total || 0;
 
@@ -117,11 +126,11 @@ export async function GET(request: Request) {
 
       const [rec, des] = await Promise.all([
         Receita.aggregate([
-          { $match: { userId: mongooseUserId, dataRecebimento: { $gte: start, $lte: end }, status: "Consolidado" } }, 
+          { $match: { userId: mongooseUserId, dataRecebimento: { $gte: start, $lte: end }, status: "Consolidado" } },
           { $group: { _id: null, total: { $sum: { $ifNull: ["$valorConsolidado", "$valor"] } } } }
         ]),
         Despesa.aggregate([
-          { $match: { userId: mongooseUserId, dataVencimento: { $gte: start, $lte: end }, status: "Consolidado" } }, 
+          { $match: { userId: mongooseUserId, dataVencimento: { $gte: start, $lte: end }, status: "Consolidado" } },
           { $group: { _id: null, total: { $sum: { $ifNull: ["$valorConsolidado", "$valor"] } } } }
         ])
       ]);
@@ -161,7 +170,7 @@ export async function GET(request: Request) {
     const links = await ReceitaCliente.find({
       userId: mongooseUserId,
       receitaId: { $in: lastReceitasRaw.map(r => r._id) }
-    }).populate("clienteId", "nome cpf").lean();
+    }).populate({ path: "clienteId", model: Cliente, select: "nome cpf" }).lean();
 
     const lastReceitas = lastReceitasRaw.map(r => {
       const link = links.find(l => l.receitaId.toString() === r._id.toString());
@@ -196,6 +205,6 @@ export async function GET(request: Request) {
     });
   } catch (error: any) {
     console.error("Dashboard API Error:", error);
-    return NextResponse.json({ error: "Erro interno" }, { status: 500 });
+    return NextResponse.json({ error: error.message || "Erro interno" }, { status: 500 });
   }
 }
