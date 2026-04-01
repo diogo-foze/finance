@@ -26,7 +26,8 @@ export default function DespesasPage() {
           tipoMovimentacao: item.tipoMovimentacao,
           status: item.status,
           valorConsolidado: item.valorConsolidado,
-          dataConsolidacao: item.dataConsolidacao
+          dataConsolidacao: item.dataConsolidacao,
+          fornecedorId: item.fornecedorId
         }));
         setDespesas(transformed);
       }

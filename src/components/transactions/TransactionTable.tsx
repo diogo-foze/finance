@@ -34,6 +34,7 @@ export interface Transaction {
   valorConsolidado?: number;
   dataConsolidacao?: string;
   clienteId?: string | { _id: string; nome: string; cpf: string };
+  fornecedorId?: string | { _id: string; nome: string; cpf: string };
 }
 
 interface TransactionTableProps {
@@ -75,7 +76,8 @@ export function TransactionTable({ transactions, type, onRowClick, onConsolidate
       filtered = filtered.filter(t => 
         t.descricao.toLowerCase().includes(lowerQuery) || 
         t.categoria.toLowerCase().includes(lowerQuery) ||
-        (t.clienteId && typeof t.clienteId === 'object' && t.clienteId.nome.toLowerCase().includes(lowerQuery))
+        (t.clienteId && typeof t.clienteId === 'object' && t.clienteId.nome.toLowerCase().includes(lowerQuery)) ||
+        (t.fornecedorId && typeof t.fornecedorId === 'object' && t.fornecedorId.nome.toLowerCase().includes(lowerQuery))
       );
     }
 
@@ -110,7 +112,10 @@ export function TransactionTable({ transactions, type, onRowClick, onConsolidate
       }
 
       filtered = filtered.filter(t => {
+        if (!t.data) return false;
         const tDate = new Date(t.data);
+        if (isNaN(tDate.getTime())) return true; // Se a data for inválida, mostrar (para não sumir tudo)
+        
         tDate.setMinutes(tDate.getMinutes() + tDate.getTimezoneOffset());
         return tDate.getTime() >= startDate.getTime() && tDate.getTime() <= endDate.getTime();
       });
@@ -227,6 +232,11 @@ export function TransactionTable({ transactions, type, onRowClick, onConsolidate
                       {transaction.clienteId && typeof transaction.clienteId === 'object' && (
                         <span className="text-[10px] text-muted-foreground font-normal">
                           Cliente: {transaction.clienteId.nome}
+                        </span>
+                      )}
+                      {(transaction as any).fornecedorId && typeof (transaction as any).fornecedorId === 'object' && (
+                        <span className="text-[10px] text-muted-foreground font-normal">
+                          Fornecedor: {(transaction as any).fornecedorId.nome}
                         </span>
                       )}
                     </div>

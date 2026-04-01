@@ -94,10 +94,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
     }
 
+    const cleanCpf = cpf.replace(/\D/g, "");
+
     await connectToDatabase();
 
     // Check if CPF already exists for THIS user
-    const existingCpf = await Cliente.findOne({ userId: session.user.id, cpf });
+    const existingCpf = await Cliente.findOne({ userId: session.user.id, cpf: cleanCpf });
     if (existingCpf) {
       return NextResponse.json({ error: "Você já possui um cliente cadastrado com este CPF/CNPJ" }, { status: 400 });
     }
@@ -105,7 +107,7 @@ export async function POST(request: Request) {
     const novoCliente = new Cliente({
       userId: session.user.id,
       nome,
-      cpf,
+      cpf: cleanCpf,
       dataNascimento: dataNascimento ? new Date(dataNascimento) : undefined,
       email,
       telefone,
@@ -134,6 +136,8 @@ export async function PUT(request: Request) {
       return NextResponse.json({ error: "Campos obrigatórios ausentes" }, { status: 400 });
     }
 
+    const cleanCpf = cpf.replace(/\D/g, "");
+
     await connectToDatabase();
 
     // Find the customer first to check ownership and existence
@@ -153,7 +157,7 @@ export async function PUT(request: Request) {
     // Check if new CPF already exists for THIS user in another record
     const duplicateCpf = await Cliente.findOne({
       userId: session.user.id,
-      cpf,
+      cpf: cleanCpf,
       _id: { $ne: id }
     });
 
@@ -163,7 +167,7 @@ export async function PUT(request: Request) {
 
     // Update fields
     cliente.nome = nome;
-    cliente.cpf = cpf;
+    cliente.cpf = cleanCpf;
     cliente.dataNascimento = dataNascimento ? new Date(dataNascimento) : undefined;
     cliente.email = email;
     cliente.telefone = telefone;

@@ -194,7 +194,7 @@ export async function GET(request: Request) {
       recentTransactions,
       userStats
     });
-  } catch (error) {
+  } catch (error: any) {
     console.error("Dashboard API Error:", error);
     return NextResponse.json({ error: "Erro interno" }, { status: 500 });
   }

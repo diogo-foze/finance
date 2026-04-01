@@ -1,4 +1,6 @@
 import mongoose, { Schema, model, models } from "mongoose";
+import "./Receita";
+import "./Cliente";
 
 const ReceitaClienteSchema = new Schema(
   {

@@ -47,8 +47,8 @@ export default function RelatoriosPage() {
       receitas: number, 
       despesas: number, 
       saldo: number,
-      receitasConsolidado: number,
-      despesasConsolidado: number
+      receitasPrevisto: number,
+      despesasPrevisto: number
     }
   }>({
     barData: [],
@@ -58,8 +58,8 @@ export default function RelatoriosPage() {
       receitas: 0, 
       despesas: 0, 
       saldo: 0,
-      receitasConsolidado: 0,
-      despesasConsolidado: 0
+      receitasPrevisto: 0,
+      despesasPrevisto: 0
     }
   });
 

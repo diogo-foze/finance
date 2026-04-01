@@ -16,10 +16,10 @@ const ClienteSchema = new Schema(
       required: true,
       validate: {
         validator: function(v: string) {
-          // Simple regex for format and length
-          return /^\d{11}$/.test(v);
+          // Aceita CPF (11) ou CNPJ (14) - apenas números
+          return /^\d{11}$|^\d{14}$/.test(v);
         },
-        message: (props: any) => `${props.value} não é um CPF válido! O CPF deve conter 11 dígitos numéricos.`
+        message: (props: any) => `${props.value} não é um CPF ou CNPJ válido! O documento deve conter 11 (CPF) ou 14 (CNPJ) dígitos numéricos.`
       }
     },
     dataNascimento: {

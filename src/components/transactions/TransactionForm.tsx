@@ -43,12 +43,16 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
     status: "Planejado" as "Planejado" | "Consolidado",
     valorConsolidado: "",
     dataConsolidacao: new Date().toISOString().split('T')[0],
-    clienteId: ""
+    clienteId: "",
+    fornecedorId: ""
   });
 
   const [customers, setCustomers] = useState<Cliente[]>([]);
+  const [suppliers, setSuppliers] = useState<any[]>([]);
   const [customerSearch, setCustomerSearch] = useState("");
+  const [supplierSearch, setSupplierSearch] = useState("");
   const [showCustomerResults, setShowCustomerResults] = useState(false);
+  const [showSupplierResults, setShowSupplierResults] = useState(false);
 
   const formatInitialValue = (val: number) => {
     return val.toLocaleString("pt-BR", { minimumFractionDigits: 2 });
@@ -66,12 +70,18 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
         status: t.status || "Planejado",
         valorConsolidado: t.valorConsolidado ? formatInitialValue(t.valorConsolidado) : "",
         dataConsolidacao: t.dataConsolidacao ? new Date(t.dataConsolidacao).toISOString().split('T')[0] : new Date().toISOString().split('T')[0],
-        clienteId: (t.clienteId && typeof t.clienteId === 'object') ? t.clienteId._id.toString() : (t.clienteId || "")
+        clienteId: (t.clienteId && typeof t.clienteId === 'object') ? t.clienteId._id.toString() : (t.clienteId || ""),
+        fornecedorId: (t.fornecedorId && typeof t.fornecedorId === 'object') ? t.fornecedorId._id.toString() : (t.fornecedorId || "")
       }));
       if (t.clienteId && typeof t.clienteId === 'object') {
         setCustomerSearch(t.clienteId.nome || "");
       } else {
         setCustomerSearch("");
+      }
+      if (t.fornecedorId && typeof t.fornecedorId === 'object') {
+        setSupplierSearch(t.fornecedorId.nome || "");
+      } else {
+        setSupplierSearch("");
       }
     } else {
       setFormData({
@@ -83,9 +93,11 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
         status: "Planejado",
         valorConsolidado: "",
         dataConsolidacao: new Date().toISOString().split('T')[0],
-        clienteId: ""
+        clienteId: "",
+        fornecedorId: ""
       });
       setCustomerSearch("");
+      setSupplierSearch("");
     }
   };
 
@@ -100,18 +112,27 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
         .then(data => setCustomers(data))
         .catch(err => console.error("Erro ao buscar clientes:", err));
     }
+    if (type === "Despesa" && open) {
+      fetch("/api/fornecedores")
+        .then(res => res.json())
+        .then(data => setSuppliers(data))
+        .catch(err => console.error("Erro ao buscar fornecedores:", err));
+    }
   }, [type, open]);
 
   const filteredCustomers = customers.filter(c => {
     const searchLower = customerSearch.toLowerCase();
     const searchDigits = customerSearch.replace(/\D/g, "");
-    
     const matchesName = c.nome.toLowerCase().includes(searchLower);
-    // Only match CPF if user typed digits
-    const matchesCpf = searchDigits !== "" && (
-      c.cpf.replace(/\D/g, "").includes(searchDigits)
-    );
-    
+    const matchesCpf = searchDigits !== "" && c.cpf.replace(/\D/g, "").includes(searchDigits);
+    return matchesName || matchesCpf;
+  });
+
+  const filteredSuppliers = suppliers.filter(s => {
+    const searchLower = supplierSearch.toLowerCase();
+    const searchDigits = supplierSearch.replace(/\D/g, "");
+    const matchesName = s.nome.toLowerCase().includes(searchLower);
+    const matchesCpf = searchDigits !== "" && s.cpf.replace(/\D/g, "").includes(searchDigits);
     return matchesName || matchesCpf;
   });
 
@@ -148,9 +169,11 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
           status: "Planejado",
           valorConsolidado: "",
           dataConsolidacao: new Date().toISOString().split('T')[0],
-          clienteId: ""
+          clienteId: "",
+          fornecedorId: ""
         });
         setCustomerSearch("");
+        setSupplierSearch("");
       }
 
       if (onSuccess) {
@@ -235,7 +258,6 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
               placeholder="Ex: Salário, Aluguel..."
             />
           </div>
-
           {type === "Receita" && (
             <div className="space-y-2 relative">
               <label className="text-sm font-medium">Cliente (Opcional)</label>
@@ -264,6 +286,41 @@ export function TransactionForm({ type, onSuccess, transaction, isOpen: external
                     >
                       <div className="font-medium">{c.nome}</div>
                       <div className="text-[10px] text-muted-foreground">{c.cpf}</div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {type === "Despesa" && (
+            <div className="space-y-2 relative">
+              <label className="text-sm font-medium">Fornecedor (Opcional)</label>
+              <Input
+                value={supplierSearch}
+                onChange={(e) => {
+                  setSupplierSearch(e.target.value);
+                  setShowSupplierResults(true);
+                  if (!e.target.value) setFormData({ ...formData, fornecedorId: "" });
+                }}
+                onFocus={() => setShowSupplierResults(true)}
+                placeholder="Busque por nome ou CNPJ..."
+              />
+              {showSupplierResults && supplierSearch && filteredSuppliers.length > 0 && 
+              !(suppliers.find(s => s._id === formData.fornecedorId)?.nome === supplierSearch) && (
+                <div className="absolute z-10 w-full bg-white dark:bg-zinc-900 border rounded-md shadow-lg max-h-48 overflow-y-auto mt-1">
+                  {filteredSuppliers.map(s => (
+                    <div
+                      key={s._id}
+                      className="px-3 py-2 hover:bg-muted cursor-pointer text-sm"
+                      onClick={() => {
+                        setFormData(prev => ({ ...prev, fornecedorId: s._id }));
+                        setSupplierSearch(s.nome);
+                        setShowSupplierResults(false);
+                      }}
+                    >
+                      <div className="font-medium">{s.nome}</div>
+                      <div className="text-[10px] text-muted-foreground">{s.cpf}</div>
                     </div>
                   ))}
                 </div>

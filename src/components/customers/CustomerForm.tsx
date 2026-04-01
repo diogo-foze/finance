@@ -95,8 +95,8 @@ export function CustomerForm({ customer, isOpen, setOpen, onSuccess }: CustomerF
       // CNPJ: 00.000.000/0001-00
       value = value.replace(/^(\d{2})(\d)/, "$1.$2");
       value = value.replace(/^(\d{2})\.(\d{3})(\d)/, "$1.$2.$3");
-      value = value.replace(/\.(\d{3})(\d)/, ".$1/$2");
-      value = value.replace(/(\d{4})(\d)/, "$1-$2");
+      value = value.replace(/^(\d{2})\.(\d{3})\.(\d{3})(\d)/, "$1.$2.$3/$4");
+      value = value.replace(/(\d{4})(\d{1,2})$/, "$1-$2");
 
       if (value.replace(/\D/g, "").length === 14) {
         fetchCnpjData(value);
@@ -155,8 +155,9 @@ export function CustomerForm({ customer, isOpen, setOpen, onSuccess }: CustomerF
 
     const clean = formData.cpf.replace(/\D/g, "");
     if (!validarCpfCnpj(clean)) {
-      setCpfError(clean.length === 11 ? "CPF inválido" : (clean.length === 14 ? "CNPJ inválido" : "Documento incompleto"));
-      toast.error("Por favor, informe um CPF ou CNPJ válido");
+      const isCnpj = clean.length > 11 || (clean.length === 0 && formData.cpf.includes("/"));
+      setCpfError(isCnpj ? "CNPJ inválido" : "CPF inválido");
+      toast.error(`Por favor, informe um ${isCnpj ? "CNPJ" : "CPF"} válido`);
       return;
     }
 

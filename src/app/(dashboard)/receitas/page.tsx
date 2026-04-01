@@ -21,7 +21,7 @@ export default function ReceitasPage() {
           _id: item._id,
           descricao: item.descricao,
           valor: item.valor,
-          data: item.dataRecebimento,
+          data: item.data || item.dataRecebimento, // Tentar primeiro o campo padronizado 'data'
           categoria: item.categoria,
           tipoMovimentacao: item.tipoMovimentacao,
           status: item.status,
@@ -30,6 +30,8 @@ export default function ReceitasPage() {
           clienteId: item.clienteId
         }));
         setReceitas(transformed);
+      } else {
+        console.error("API Error:", data.error);
       }
     } catch (error) {
       console.error("Erro ao buscar receitas:", error);

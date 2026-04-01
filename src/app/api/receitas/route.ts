@@ -4,6 +4,13 @@ import connectToDatabase from "@/lib/mongodb";
 import Receita from "@/models/Receita";
 import Cliente from "@/models/Cliente";
 import ReceitaCliente from "@/models/ReceitaCliente";
+import mongoose from "mongoose";
+
+// Garantir que os modelos estão registrados corretamente
+if (!mongoose.models.Receita) {
+  // Re-importing might help if it was a file cache, but we just want to re-register
+}
+
 
 export async function GET(request: Request) {
   try {
@@ -19,12 +26,21 @@ export async function GET(request: Request) {
 
     await connectToDatabase();
     
-    let query: any = { userId: session.user.id };
+    let query: any = { userId: new mongoose.Types.ObjectId(session.user.id) };
     
     if (startDate || endDate) {
       query.dataRecebimento = {};
-      if (startDate) query.dataRecebimento.$gte = new Date(startDate);
-      if (endDate) query.dataRecebimento.$lte = new Date(endDate);
+      if (startDate && startDate !== "null" && startDate !== "undefined") {
+        query.dataRecebimento.$gte = new Date(startDate);
+      }
+      if (endDate && endDate !== "null" && endDate !== "undefined") {
+        query.dataRecebimento.$lte = new Date(endDate);
+      }
+      
+      // Se as datas resultarem em inválidas, remover o filtro
+      if (query.dataRecebimento.$gte && isNaN(query.dataRecebimento.$gte.getTime())) delete query.dataRecebimento.$gte;
+      if (query.dataRecebimento.$lte && isNaN(query.dataRecebimento.$lte.getTime())) delete query.dataRecebimento.$lte;
+      if (Object.keys(query.dataRecebimento).length === 0) delete query.dataRecebimento;
     }
 
     // Fetch revenues (without direct populate now)
@@ -49,7 +65,7 @@ export async function GET(request: Request) {
     });
 
     return NextResponse.json(result);
-  } catch (error) {
+  } catch (error: any) {
     console.error("Erro ao buscar receitas:", error);
     return NextResponse.json({ error: "Erro interno do servidor" }, { status: 500 });
   }
