@@ -55,7 +55,10 @@ export function SupplierForm({ supplier, isOpen, setOpen, onSuccess }: SupplierF
 
     try {
       const response = await fetch(`https://open.cnpja.com/office/${cleanCnpj}`);
-      if (!response.ok) return;
+      if (!response.ok) {
+        toast.info("Tente novamente em alguns instantes...");
+        return;
+      }
       const data = await response.json();
 
       setFormData(prev => ({
@@ -90,7 +93,7 @@ export function SupplierForm({ supplier, isOpen, setOpen, onSuccess }: SupplierF
     }
 
     setFormData({ ...formData, cpf: value });
-    
+
     const clean = value.replace(/\D/g, "");
     if (clean.length > 0 && clean.length !== 11 && clean.length !== 14) {
       setCpfError("Incompleto");
