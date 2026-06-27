@@ -347,14 +347,22 @@ export default function ChatPage({ params }: { params: Promise<{ userId: string 
             </div>
           )}
           <div className="flex gap-3">
-            <input
-              type="text"
+            <textarea
               value={inputText}
-              onChange={(e) => setInputText(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && sendMessage()}
+              onChange={(e) => {
+                const val = e.target.value;
+                setInputText(val.replace(/\\n/g, "\n"));
+              }}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter' && !e.shiftKey) {
+                  e.preventDefault();
+                  sendMessage();
+                }
+              }}
               placeholder={editingMessage ? "Edite sua mensagem..." : "Escreva sua mensagem..."}
-              className="flex-1 p-3 bg-muted rounded-xl outline-none focus:ring-2 focus:ring-primary/20 border-none transition-all text-sm"
+              className="flex-1 p-3 bg-muted rounded-xl outline-none focus:ring-2 focus:ring-primary/20 border-none transition-all text-sm resize-none h-11 py-2.5"
               autoFocus={!!editingMessage}
+              rows={1}
             />
             <button
               onClick={sendMessage}

@@ -33,9 +33,11 @@ const sections = [
 const apiDocs = {
   auth: {
     title: "Autenticação",
-    description: "Todas as rotas exigem autenticação (exceto login/registro). O sistema suporta Sessão de Navegador e JWT Bearer Token.",
+    description: "Todas as rotas exigem autenticação (exceto login/registro/envio de código). O sistema suporta Sessão de Navegador (NextAuth com suporte a senha e código temporário) e JWT Bearer Token.",
     endpoints: [
-      { method: "POST", path: "/api/auth/login", desc: "Autentica o usuário e retorna o Token JWT." },
+      { method: "POST", path: "/api/auth/login", desc: "Autentica o usuário e retorna o Token JWT (suporta senha ou código de acesso)." },
+      { method: "POST", path: "/api/auth/send-login-code", desc: "Gera e envia por e-mail o código temporário para login sem senha." },
+      { method: "POST", path: "/api/auth/callback/code-credentials", desc: "Autentica o usuário utilizando o e-mail e código recebidos (NextAuth)." },
       { method: "POST", path: "/api/auth/register", desc: "Cria uma nova conta e envia código de ativação." },
       { method: "POST", path: "/api/auth/verify-email", desc: "Valida o e-mail utilizando o código de 6 dígitos." },
       { method: "POST", path: "/api/auth/forgot-password", desc: "Solicita recuperação de senha por e-mail." },

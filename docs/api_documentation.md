@@ -15,9 +15,10 @@ Todas as rotas (exceto as de registro e login inicial) exigem autenticação. O 
 ## 🔐 Autenticação e Perfil
 
 ### `POST /api/auth/login`
-Autenticação manual do usuário com senha.
-- **Corpo**: `{ "email": "string", "password": "string" }`
-- **Resposta**: Retorna um **Token JWT** e os dados do usuário. Ideal para integrações externas.
+Autenticação manual do usuário (com senha ou código temporário).
+- **Corpo (Senha)**: `{ "email": "string", "password": "string" }`
+- **Corpo (Código)**: `{ "email": "string", "code": "string" }`
+- **Resposta**: Retorna um **Token JWT** e os dados do usuário. Perfeito para integrações externas e automações.
 
 ### `POST /api/auth/send-login-code` (Login sem Senha - Envio do Código)
 Gera e envia por e-mail um código de acesso de 6 dígitos válido por 15 minutos.

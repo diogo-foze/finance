@@ -8,43 +8,85 @@ const JWT_SECRET = process.env.NEXTAUTH_SECRET || "fallback-secret-for-dev-only"
 
 export async function POST(request: Request) {
   try {
-    const { email, password } = await request.json();
+    const { email, password, code } = await request.json();
 
-    if (!email || !password) {
+    if (!email || (!password && !code)) {
       return NextResponse.json(
-        { error: "Email e senha são obrigatórios" },
+        { error: "Email e senha (ou código) são obrigatórios" },
         { status: 400 }
       );
     }
 
     await connectToDatabase();
 
-    // Find user and include password field (which is select: false by default)
-    const user = await User.findOne({ email }).select("+password");
+    let user;
 
-    if (!user || !user.password) {
-      return NextResponse.json(
-        { error: "Credenciais inválidas" },
-        { status: 401 }
-      );
-    }
+    if (code) {
+      // Find user and include loginCode and loginCodeExpiresAt
+      user = await User.findOne({ email }).select("+loginCode +loginCodeExpiresAt");
 
-    // Check if user is a Google-only account (no password set)
-    if (user.provider === "google" && !user.password) {
+      if (!user || !user.loginCode) {
         return NextResponse.json(
-          { error: "Esta conta utiliza login pelo Google. Por favor, use o botão de login social." },
-          { status: 400 }
+          { error: "Nenhum código ativo encontrado para este e-mail" },
+          { status: 401 }
         );
-    }
+      }
 
-    // Compare passwords
-    const isPasswordMatch = await bcrypt.compare(password, user.password);
+      if (user.loginCode !== code.trim()) {
+        return NextResponse.json(
+          { error: "Código inválido" },
+          { status: 401 }
+        );
+      }
 
-    if (!isPasswordMatch) {
-      return NextResponse.json(
-        { error: "Credenciais inválidas" },
-        { status: 401 }
+      if (!user.loginCodeExpiresAt || new Date() > new Date(user.loginCodeExpiresAt)) {
+        return NextResponse.json(
+          { error: "Código expirado" },
+          { status: 401 }
+        );
+      }
+
+      // Code is valid! Clear it
+      await User.updateOne(
+        { _id: user._id },
+        { $unset: { loginCode: "", loginCodeExpiresAt: "" } }
       );
+
+      // Verify email if not verified
+      if (!user.isEmailVerified) {
+        await User.updateOne(
+          { _id: user._id },
+          { $set: { isEmailVerified: true } }
+        );
+      }
+    } else {
+      // Find user and include password field (which is select: false by default)
+      user = await User.findOne({ email }).select("+password");
+
+      if (!user || !user.password) {
+        return NextResponse.json(
+          { error: "Credenciais inválidas" },
+          { status: 401 }
+        );
+      }
+
+      // Check if user is a Google-only account (no password set)
+      if (user.provider === "google" && !user.password) {
+          return NextResponse.json(
+            { error: "Esta conta utiliza login pelo Google. Por favor, use o botão de login social." },
+            { status: 400 }
+          );
+      }
+
+      // Compare passwords
+      const isPasswordMatch = await bcrypt.compare(password, user.password);
+
+      if (!isPasswordMatch) {
+        return NextResponse.json(
+          { error: "Credenciais inválidas" },
+          { status: 401 }
+        );
+      }
     }
 
     // Create JWT Token
