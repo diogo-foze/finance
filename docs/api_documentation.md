@@ -15,9 +15,29 @@ Todas as rotas (exceto as de registro e login inicial) exigem autenticação. O 
 ## 🔐 Autenticação e Perfil
 
 ### `POST /api/auth/login`
-Autenticação manual do usuário.
+Autenticação manual do usuário com senha.
 - **Corpo**: `{ "email": "string", "password": "string" }`
 - **Resposta**: Retorna um **Token JWT** e os dados do usuário. Ideal para integrações externas.
+
+### `POST /api/auth/send-login-code` (Login sem Senha - Envio do Código)
+Gera e envia por e-mail um código de acesso de 6 dígitos válido por 15 minutos.
+- **Corpo**: `{ "email": "string" }`
+- **Resposta**: `{ "message": "Código enviado com sucesso." }`
+- **Nota**: Requer que as configurações de SMTP estejam devidamente cadastradas no banco de dados.
+
+### `POST /api/auth/callback/code-credentials` (Login sem Senha - Autenticação)
+Realiza a autenticação utilizando o e-mail e o código temporário recebido (gerenciado pelo NextAuth Provider `code-credentials`).
+- **Corpo**: `{ "email": "string", "code": "string" }`
+- **Uso no Client-Side (NextAuth)**:
+  ```javascript
+  const res = await signIn("code-credentials", {
+    email: "usuario@exemplo.com",
+    code: "123456",
+    redirect: false
+  });
+  ```
+- **Resposta**: Estabelece a sessão do usuário caso as credenciais estejam corretas e dentro do prazo de validade.
+
 
 ### `POST /api/auth/forgot-password`
 Solicita um código de recuperação de senha por e-mail.
