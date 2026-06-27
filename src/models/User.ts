@@ -40,6 +40,14 @@ const UserSchema = new Schema(
       type: Date,
       select: false,
     },
+    loginCode: {
+      type: String,
+      select: false,
+    },
+    loginCodeExpiresAt: {
+      type: Date,
+      select: false,
+    },
     lastActive: {
       type: Date,
       default: Date.now,

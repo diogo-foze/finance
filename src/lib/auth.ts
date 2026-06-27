@@ -58,6 +58,70 @@ export const authOptions: NextAuthOptions = {
         }
       },
     }),
+    CredentialsProvider({
+      id: "code-credentials",
+      name: "Code Credentials",
+      credentials: {
+        email: { label: "Email", type: "text" },
+        code: { label: "Code", type: "text" },
+      },
+      async authorize(credentials) {
+        try {
+          console.log("Tentativa de login por código para:", credentials?.email);
+
+          if (!credentials?.email || !credentials?.code) {
+            console.log("Credenciais de código ausentes");
+            return null;
+          }
+
+          await connectToDatabase();
+          console.log("MongoDB conectado para login por código");
+
+          const user = await User.findOne({ email: credentials.email }).select("+loginCode +loginCodeExpiresAt");
+
+          if (!user || !user.loginCode) {
+            console.log("Usuário não encontrado ou sem código de login ativo");
+            return null;
+          }
+
+          if (user.loginCode !== credentials.code.trim()) {
+            console.log("Código de login inválido");
+            return null;
+          }
+
+          if (!user.loginCodeExpiresAt || new Date() > new Date(user.loginCodeExpiresAt)) {
+            console.log("Código de login expirado");
+            return null;
+          }
+
+          // Code is valid! Clear it
+          await User.updateOne(
+            { _id: user._id },
+            { $unset: { loginCode: "", loginCodeExpiresAt: "" } }
+          );
+
+          // Mark email as verified since they just verified it via email code
+          if (!user.isEmailVerified) {
+            await User.updateOne(
+              { _id: user._id },
+              { $set: { isEmailVerified: true } }
+            );
+          }
+
+          console.log("Login por código bem-sucedido para:", user.email);
+          return {
+            id: user._id.toString(),
+            name: user.name,
+            email: user.email,
+            image: user.image,
+            role: user.role || "user",
+          };
+        } catch (error) {
+          console.error("Erro no authorize de login por código:", error);
+          return null;
+        }
+      },
+    }),
   ],
   callbacks: {
     async signIn({ user, account, profile }: any) {

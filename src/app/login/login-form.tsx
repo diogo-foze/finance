@@ -1,12 +1,14 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
+import { Loader2, ArrowLeft } from "lucide-react";
+import { toast } from "sonner";
 
 export default function LoginForm() {
   const router = useRouter();
@@ -15,6 +17,10 @@ export default function LoginForm() {
   const [error, setError] = useState("");
   const [isLoading, setIsLoading] = useState(false);
   const [showGoogle, setShowGoogle] = useState(true);
+
+  const [loginMode, setLoginMode] = useState<"password" | "code_request" | "code_verify">("password");
+  const [digits, setDigits] = useState<string[]>(Array(6).fill(""));
+  const inputRefs = useRef<(HTMLInputElement | null)[]>([]);
 
   useEffect(() => {
     async function checkSetupAndLoadConfig() {
@@ -53,22 +59,157 @@ export default function LoginForm() {
     }
   }, [urlError, urlMessage]);
 
+  const code = digits.join("");
+
+  const handleChangeCode = (value: string, index: number) => {
+    const cleanValue = value.replace(/[^0-9]/g, "");
+    if (!cleanValue) {
+      const newDigits = [...digits];
+      newDigits[index] = "";
+      setDigits(newDigits);
+      return;
+    }
+
+    const newDigits = [...digits];
+    const valChars = cleanValue.split("");
+    
+    for (let i = 0; i < valChars.length && index + i < 6; i++) {
+      newDigits[index + i] = valChars[i];
+    }
+    setDigits(newDigits);
+
+    const nextIndex = Math.min(index + valChars.length, 5);
+    if (nextIndex !== index) {
+      inputRefs.current[nextIndex]?.focus();
+    } else if (index < 5 && valChars.length > 0) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>, index: number) => {
+    if (e.key === "Backspace") {
+      if (!digits[index] && index > 0) {
+        const newDigits = [...digits];
+        newDigits[index - 1] = "";
+        setDigits(newDigits);
+        inputRefs.current[index - 1]?.focus();
+      } else {
+        const newDigits = [...digits];
+        newDigits[index] = "";
+        setDigits(newDigits);
+      }
+    } else if (e.key === "ArrowLeft" && index > 0) {
+      inputRefs.current[index - 1]?.focus();
+    } else if (e.key === "ArrowRight" && index < 5) {
+      inputRefs.current[index + 1]?.focus();
+    }
+  };
+
+  const handlePaste = (e: React.ClipboardEvent<HTMLInputElement>) => {
+    e.preventDefault();
+    const pastedData = e.clipboardData.getData("text").replace(/[^0-9]/g, "").slice(0, 6);
+    if (pastedData) {
+      const newDigits = [...digits];
+      for (let i = 0; i < 6; i++) {
+        newDigits[i] = pastedData[i] || "";
+      }
+      setDigits(newDigits);
+      
+      const focusIndex = Math.min(pastedData.length, 5);
+      inputRefs.current[focusIndex]?.focus();
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setIsLoading(true);
     setError("");
 
-    const res = await signIn("credentials", {
-      email,
-      password,
-      redirect: false,
-    });
+    if (loginMode === "password") {
+      const res = await signIn("credentials", {
+        email,
+        password,
+        redirect: false,
+      });
 
-    if (res?.error) {
-      setError("Credenciais inválidas");
+      if (res?.error) {
+        setError("Credenciais inválidas");
+        setIsLoading(false);
+      } else {
+        router.push("/dashboard");
+      }
+    } else if (loginMode === "code_request") {
+      try {
+        const res = await fetch("/api/auth/send-login-code", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ email }),
+        });
+
+        const data = await res.json();
+
+        if (!res.ok) {
+          throw new Error(data.error || "Erro ao enviar o código.");
+        }
+
+        toast.success(data.message || "Código enviado com sucesso!");
+        setLoginMode("code_verify");
+        setTimeout(() => {
+          inputRefs.current[0]?.focus();
+        }, 100);
+      } catch (err: any) {
+        setError(err.message || "Erro inesperado");
+      } finally {
+        setIsLoading(false);
+      }
+    } else if (loginMode === "code_verify") {
+      if (code.length !== 6) {
+        setError("Digite o código de 6 dígitos.");
+        setIsLoading(false);
+        return;
+      }
+
+      const res = await signIn("code-credentials", {
+        email,
+        code,
+        redirect: false,
+      });
+
+      if (res?.error) {
+        setError("Código inválido ou expirado.");
+        setIsLoading(false);
+      } else {
+        toast.success("Login realizado com sucesso!");
+        router.push("/dashboard");
+      }
+    }
+  };
+
+  const handleResendCode = async () => {
+    setError("");
+    setIsLoading(true);
+    try {
+      const res = await fetch("/api/auth/send-login-code", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email }),
+      });
+
+      const data = await res.json();
+
+      if (!res.ok) {
+        throw new Error(data.error || "Erro ao enviar o código.");
+      }
+
+      toast.success(data.message || "Código enviado com sucesso!");
+      setDigits(Array(6).fill(""));
+      setTimeout(() => {
+        inputRefs.current[0]?.focus();
+      }, 100);
+    } catch (err: any) {
+      setError(err.message || "Erro inesperado");
+    } finally {
       setIsLoading(false);
-    } else {
-      router.push("/dashboard");
     }
   };
 
@@ -79,59 +220,176 @@ export default function LoginForm() {
   return (
     <Card className="w-full max-w-sm shadow-xl">
       <CardHeader className="space-y-1 text-center">
-        <CardTitle className="text-2xl font-bold tracking-tight">Login</CardTitle>
+        <CardTitle className="text-2xl font-bold tracking-tight">
+          {loginMode === "code_verify" ? "Verificar Código" : "Login"}
+        </CardTitle>
         <CardDescription>
-          Entre na sua conta FinanSys
+          {loginMode === "code_verify"
+            ? `Código enviado para o e-mail ${email}`
+            : "Entre na sua conta FinanSys"}
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-2">
-            <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-              Email
-            </label>
-            <Input
-              id="email"
-              type="email"
-              placeholder="seu@email.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="off"
-              required
-            />
+        {loginMode !== "code_verify" && (
+          <div className="flex border-b border-zinc-100 mb-6">
+            <button
+              type="button"
+              className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-colors ${
+                loginMode === "password"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => {
+                setLoginMode("password");
+                setError("");
+              }}
+            >
+              Com Senha
+            </button>
+            <button
+              type="button"
+              className={`flex-1 pb-3 text-sm font-semibold border-b-2 transition-colors ${
+                loginMode === "code_request"
+                  ? "border-primary text-primary"
+                  : "border-transparent text-muted-foreground hover:text-foreground"
+              }`}
+              onClick={() => {
+                setLoginMode("code_request");
+                setError("");
+              }}
+            >
+              Sem Senha
+            </button>
           </div>
-          <div className="space-y-2">
-            <div className="flex items-center justify-between">
-              <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
-                Senha
-              </label>
-            </div>
-            <Input
-              id="password"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              autoComplete="new-password"
-              required
-            />
-          </div>
-          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
-          <Button type="submit" className="w-full" disabled={isLoading}>
-            {isLoading ? "Entrando..." : "Entrar"}
-          </Button>
-          <Link href="/recuperar-senha" className="text-xs font-medium text-primary hover:underline" tabIndex={-1}>
-            Esqueci a senha
-          </Link>
+        )}
 
-          <div className="text-center pt-2 border-t border-zinc-100 mt-4">
-            <span className="text-xs text-muted-foreground">Novo por aqui? </span>
-            <Link href="/register" className="text-xs font-bold text-primary hover:underline">
-              Crie uma conta
-            </Link>
-          </div>
+        <form onSubmit={handleSubmit} className="space-y-4">
+          {loginMode !== "code_verify" && (
+            <div className="space-y-2">
+              <label htmlFor="email" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                Email
+              </label>
+              <Input
+                id="email"
+                type="email"
+                placeholder="seu@email.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                autoComplete="off"
+                required
+                disabled={isLoading}
+              />
+            </div>
+          )}
+
+          {loginMode === "password" && (
+            <div className="space-y-2">
+              <div className="flex items-center justify-between">
+                <label htmlFor="password" className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">
+                  Senha
+                </label>
+              </div>
+              <Input
+                id="password"
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                autoComplete="new-password"
+                required
+                disabled={isLoading}
+              />
+            </div>
+          )}
+
+          {loginMode === "code_verify" && (
+            <div className="space-y-4">
+              <label className="text-sm font-medium block text-center text-muted-foreground">
+                Código de 6 dígitos
+              </label>
+              <div className="flex justify-center gap-2">
+                {digits.map((digit, index) => (
+                  <input
+                    key={index}
+                    ref={(el) => {
+                      inputRefs.current[index] = el;
+                    }}
+                    type="text"
+                    inputMode="numeric"
+                    pattern="[0-9]*"
+                    maxLength={1}
+                    value={digit}
+                    onChange={(e) => handleChangeCode(e.target.value, index)}
+                    onKeyDown={(e) => handleKeyDown(e, index)}
+                    onPaste={handlePaste}
+                    required
+                    disabled={isLoading}
+                    className="w-10 h-12 text-center text-xl font-bold border border-input bg-transparent rounded-lg transition-colors outline-none focus:border-ring focus:ring-3 focus:ring-ring/50 disabled:pointer-events-none disabled:cursor-not-allowed disabled:opacity-50"
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {error && <p className="text-sm font-medium text-destructive">{error}</p>}
+
+          {loginMode !== "code_verify" ? (
+            <div className="space-y-4">
+              <Button type="submit" className="w-full" disabled={isLoading}>
+                {loginMode === "password" ? (
+                  isLoading ? "Entrando..." : "Entrar"
+                ) : (
+                  isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Enviando...</> : "Enviar Código de Acesso"
+                )}
+              </Button>
+              {loginMode === "password" && (
+                <div className="text-left">
+                  <Link href="/recuperar-senha" className="text-xs font-medium text-primary hover:underline" tabIndex={-1}>
+                    Esqueci a senha
+                  </Link>
+                </div>
+              )}
+            </div>
+          ) : (
+            <div className="space-y-4">
+              <Button type="submit" className="w-full" disabled={isLoading || code.length !== 6}>
+                {isLoading ? <><Loader2 className="mr-2 h-4 w-4 animate-spin" /> Entrando...</> : "Validar e Entrar"}
+              </Button>
+
+              <div className="flex items-center justify-between text-xs mt-2">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setLoginMode("code_request");
+                    setDigits(Array(6).fill(""));
+                    setError("");
+                  }}
+                  className="font-medium text-muted-foreground hover:text-primary transition-colors flex items-center gap-1"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> Corrigir e-mail
+                </button>
+                <button
+                  type="button"
+                  onClick={handleResendCode}
+                  disabled={isLoading}
+                  className="font-bold text-primary hover:underline disabled:opacity-50"
+                >
+                  Reenviar código
+                </button>
+              </div>
+            </div>
+          )}
+
+          {loginMode !== "code_verify" && (
+            <div className="text-center pt-2 border-t border-zinc-100 mt-4">
+              <span className="text-xs text-muted-foreground">Novo por aqui? </span>
+              <Link href="/register" className="text-xs font-bold text-primary hover:underline">
+                Crie uma conta
+              </Link>
+            </div>
+          )}
         </form>
 
-        {showGoogle && (
+        {showGoogle && loginMode !== "code_verify" && (
           <>
             <div className="relative my-6">
               <div className="absolute inset-0 flex items-center">

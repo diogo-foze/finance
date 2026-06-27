@@ -29,42 +29,15 @@ export function Sidebar({ className }: { className?: string }) {
 
   return (
     <aside className={cn("flex h-full w-full flex-col bg-sidebar border-r border-sidebar-border text-sidebar-foreground", className)}>
-      <div className="flex h-16 items-center px-6 font-bold text-2xl tracking-tight text-white">
+      <div className="flex h-16 items-center shrink-0 px-6 font-bold text-2xl tracking-tight text-white">
         <span className="text-primary mr-1">Finan</span>Sys
       </div>
 
-      <div className="px-3 py-2">
-        <p className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2">Menu</p>
-        <nav className="space-y-1">
-          {navItems.map((item) => {
-            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-            const Icon = item.icon;
-            return (
-              <Link
-                key={item.href}
-                href={item.href}
-                className={cn(
-                  "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
-                  isActive
-                    ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
-                    : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
-                )}
-              >
-                <Icon className="h-4 w-4" />
-                {item.name}
-              </Link>
-            );
-          })}
-        </nav>
-      </div>
-
-      {isAdmin && (
-        <div className="px-3 py-2 mt-4">
-          <p className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2 flex items-center gap-1">
-            <ShieldCheck className="h-3 w-3" /> Gestão
-          </p>
+      <div className="flex-1 overflow-y-auto px-3 py-2 space-y-4">
+        <div>
+          <p className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2">Menu</p>
           <nav className="space-y-1">
-            {adminItems.map((item) => {
+            {navItems.map((item) => {
               const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
               const Icon = item.icon;
               return (
@@ -85,9 +58,38 @@ export function Sidebar({ className }: { className?: string }) {
             })}
           </nav>
         </div>
-      )}
 
-      <div className="p-4 mt-auto border-t border-sidebar-border">
+        {isAdmin && (
+          <div>
+            <p className="px-3 text-xs font-semibold text-sidebar-foreground/50 uppercase tracking-wider mb-2 flex items-center gap-1">
+              <ShieldCheck className="h-3 w-3" /> Gestão
+            </p>
+            <nav className="space-y-1">
+              {adminItems.map((item) => {
+                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                const Icon = item.icon;
+                return (
+                  <Link
+                    key={item.href}
+                    href={item.href}
+                    className={cn(
+                      "flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium transition-colors",
+                      isActive
+                        ? "bg-sidebar-accent text-sidebar-accent-foreground shadow-sm"
+                        : "text-sidebar-foreground/70 hover:bg-sidebar-accent hover:text-sidebar-accent-foreground"
+                    )}
+                  >
+                    <Icon className="h-4 w-4" />
+                    {item.name}
+                  </Link>
+                );
+              })}
+            </nav>
+          </div>
+        )}
+      </div>
+
+      <div className="p-4 shrink-0 border-t border-sidebar-border">
         <Link
           href="/perfil"
           className="mb-2 flex items-center gap-3 px-3 py-2 rounded-md transition-colors hover:bg-sidebar-accent hover:text-sidebar-accent-foreground group"
